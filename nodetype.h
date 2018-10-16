@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <functional>
 using namespace std;
 
 enum nodeType{Basic,Num,String,Variable,Pro,Fun};
@@ -13,6 +14,8 @@ public:
 
     vector<BasicNode*> sonNode;
 };
+typedef function<bool(vector<BasicNode*>&sonNode)>canBE; //检测函数基础求值参数表是否合法
+typedef function<BasicNode*(vector<BasicNode*>&sonNode)>BE; //进行基础求值
 
 
 class NumNode : public BasicNode
@@ -69,13 +72,22 @@ public:
 class Function
 {
 private:
-    int parnum;
-    ProNode* pronode;
+    int parnum; //参数个数
+    ProNode* pronode; //函数体每句的AST按顺序排列（怎么表达返回值？）
+    bool VLP; //是否不进行参数个数检查
+    //关于基础求值
+    canBE canBEfun;
+    BE BEfun;
+    bool iscanBE=false;
 public:
-    Function(int parnum,ProNode* pronode):parnum(parnum),pronode(pronode){}
+    Function(int parnum,ProNode* pronode,bool VLP=false):parnum(parnum),pronode(pronode),VLP(VLP){}
 
     ProNode* getPronode() {return this->pronode;}
     int getParnum() {return this->parnum;}
+    bool isVLP() {return this->VLP;}
+    //关于基础求值
+    void setBasicEvaluation(canBE canBEfun,BE BEfun); //该函数一般仅调用一次
+    BasicNode* basicEval(vector<BasicNode *> &sonNode);
 };
 
 
@@ -89,4 +101,5 @@ public:
     FunNode(Function* funEntity):funEntity(funEntity){}
 
     ProNode* getFunBody() {return this->funEntity->getPronode();}
+    BasicNode* eval(); //求值之后返回值应当替换该节点
 };
