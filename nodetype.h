@@ -3,7 +3,7 @@
 #include <vector>
 using namespace std;
 
-enum nodeType{Basic,Num,Value,Pro,Fun};
+enum nodeType{Basic,Num,String,Variable,Pro,Fun};
 
 class BasicNode //不可直接创建对象
 {
@@ -22,24 +22,36 @@ protected:
 public:
     virtual int getType() {return Num;}
     virtual void addNode(BasicNode *node) {throw string("NumNode no sonNode");}
+    NumNode(double num) {this->num=num;}
 
     double getNum() {return this->num;}
 };
 
 
-class ValueNode : public BasicNode
+class StringNode : public BasicNode
 {
 protected:
-    double num;
+    string str;
+public:
+    virtual int getType() {return String;}
+    virtual void addNode(BasicNode *node) {throw string("String no sonNode");}
+    StringNode(string str) {this->str=str;}
+
+    string getStr() {return this->str;}
+};
+
+class VariableNode : public BasicNode
+{
+protected:
+    BasicNode val;
     bool isempty=true;
 public:
-    virtual int getType() {return Value;}
-    virtual void addNode(BasicNode *node) {throw string("ValueNode no sonNode");}
-    ValueNode(double num):num(num){}
+    virtual int getType() {return Variable;}
+    virtual void addNode(BasicNode* node) {throw string("VariableNode no sonNode");}
 
     bool isEmpty() {return this->isempty;}
-    void setVal(double num);
-    double getVal() {return this->num;}
+    void setVal(BasicNode val);
+    BasicNode getVal() {return this->val;}
     void clearVal() {this->isempty=true;}
 };
 

@@ -1,9 +1,14 @@
 #include "nodetype.h"
 
-void ValueNode::setVal(double num)
+void VariableNode::setVal(BasicNode num)
 {
-    this->isEmpty=false;
-    this->num=num;
+    if(num.getType()==Num||num.getType()==String)
+    {
+        this->isEmpty=false;
+        this->num=num;
+    }
+    else
+        throw string("The value of a variable must be literal");
 }
 
 void FunNode::addNode(BasicNode *node)
