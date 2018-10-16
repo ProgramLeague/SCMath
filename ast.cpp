@@ -3,12 +3,12 @@ using namespace ast;
 
 void ast::Init()
 {
-    BinOpPriority['$'] = 0;
+    /*BinOpPriority['$'] = 0;
     BinOpPriority['+'] = 10;
     BinOpPriority['-'] = 10;
     BinOpPriority['*'] = 20;
     BinOpPriority['/'] = 20;
-    BinOpPriority['^'] = 30;
+    BinOpPriority['^'] = 30;*/
 }
 
 bool isNum(const char &c) {

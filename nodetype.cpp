@@ -11,24 +11,6 @@ void VariableNode::setVal(BasicNode num)
         throw string("The value of a variable must be literal");
 }
 
-void Function::setBasicEvaluation(canBE canBEfun, BE BEfun)
-{
-    this->iscanBE=true;
-    this->canBEfun=canBEfun;
-    this->BEfun=BEfun;
-}
-
-BasicNode* Function::basicEval(vector<BasicNode *>&sonNode)
-{
-    if(!this->iscanBE)
-        throw string("BE undefined");
-    if(this->canBEfun(sonNode))
-    {
-        return this->BEfun(sonNode);
-    }
-    else
-        throw string("sonNode type mismatch");
-}
 
 void FunNode::addNode(BasicNode *node)
 {
@@ -39,14 +21,54 @@ void FunNode::addNode(BasicNode *node)
     this->sonNode.push_back(node);
 }
 
-BasicNode* FunNode::eval()
+void iterEval(BasicNode* &node)
 {
-    ProNode* funBody=this->getFunBody();
-    for(int i=0;i<funBody->sonNode.size()-1;i++) //fix:最后一个是返回值？？先不搞
+    if(node->getType()==Pro) //按正常函数里面不要套Pro，不过考虑到某些原因……这里做个检查，以后奇葩的支持了也方便改
+        throw string("ProNode cannot be function's sonNode");
+    else
     {
-        BasicNode* &node=funBody->sonNode.at(i);
-        if(node->getType()==Fun)
-            node=dynamic_cast<FunNode*>(node)->eval(); //节点的替换在这里（父节点）完成，子节点只需要返回即可
+        node=node->eval(); //节点的替换在这里（父节点）完成，子节点只需要返回即可（fix:现在还没析构原来的子节点，待会写）
+    }
+}
+
+BasicNode* Function::eval(vector<BasicNode *> &sonNode)
+{
+    //对所有参数求值
+    for(BasicNode* &node:sonNode)
+    {
+        iterEval(node);
     }
 
+    //函数求值（fix:这个是错的）
+    if(this->iscanBE) //基础求值模式
+    {
+        if(this->canBEfun(sonNode)) //参数合法
+            return this->BEfun(sonNode);
+        else
+            throw string("sonNode type mismatch");
+    }
+    else //不能基础求值就是正常有函数体Pro的
+    {
+        vector<BasicNode*>&funbody=this->pronode->sonNode;
+        for(int i=0;i<funbody.size()-1;i++) //最后一个可能是返回值，先留着后面单独处理
+        {
+            iterEval(funbody.at(i));
+            if(funbody.at(i)->getRet())
+                return funbody.at(i);
+        }
+        //前面都不是返回值，最后一个是
+        BasicNode* lastnode=funbody.at(funbody.size()-1);
+        if(lastnode==nullptr)
+            return nullptr;
+        else
+        {
+            iterEval(lastnode);
+            return lastnode;
+        }
+    }
+}
+
+BasicNode* FunNode::eval()
+{
+    return this->funEntity->eval(this->sonNode);
 }
