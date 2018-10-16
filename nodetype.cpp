@@ -1,5 +1,14 @@
 #include "nodetype.h"
 
+BasicNode::~BasicNode()
+{
+    for(BasicNode* node:this->sonNode)
+    {
+        if(node->getType()!=Variable) //这个随着域释放，不被连环析构
+            delete node;
+    }
+}
+
 void VariableNode::setVal(BasicNode num)
 {
     if(num.getType()==Num||num.getType()==String)
@@ -27,7 +36,9 @@ void iterEval(BasicNode* &node)
         throw string("ProNode cannot be function's sonNode");
     else
     {
-        node=node->eval(); //节点的替换在这里（父节点）完成，子节点只需要返回即可（fix:现在还没析构原来的子节点，待会写）
+        BasicNode* result=node->eval();
+        delete node;
+        node=result; //节点的替换在这里（父节点）完成，子节点只需要返回即可
     }
 }
 

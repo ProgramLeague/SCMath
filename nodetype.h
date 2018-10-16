@@ -4,16 +4,17 @@
 #include <functional>
 using namespace std;
 
-enum nodeType{Basic,Num,String,Variable,Pro,Fun};
+enum nodeType{Num,String,Variable,Pro,Fun};
 
 class BasicNode //不可直接创建对象
 {
 protected:
     bool isRet=false;
 public:
-    virtual int getType(){return Basic;}
+    virtual int getType();
     virtual void addNode(BasicNode* node) {this->sonNode.push_back(node);} //使用该方法添加成员可查错
     virtual BasicNode* eval();
+    virtual ~BasicNode();
 
     void setRet() {this->isRet=true;} //不可eval节点设置ret无效
     bool getRet() {return this->isRet;}
@@ -30,7 +31,7 @@ protected:
 public:
     virtual int getType() {return Num;}
     virtual void addNode(BasicNode *node) {throw string("NumNode no sonNode");}
-    virtual BasicNode* eval() {return dynamic_cast<BasicNode*>(this);}
+    virtual BasicNode* eval() {return dynamic_cast<BasicNode*>(new NumNode(num));} //字面量在计算后将会析构，这里要new新的
     NumNode(double num) {this->num=num;}
 
     double getNum() {return this->num;}
@@ -44,7 +45,7 @@ protected:
 public:
     virtual int getType() {return String;}
     virtual void addNode(BasicNode *node) {throw string("String no sonNode");}
-    virtual BasicNode* eval() {return dynamic_cast<BasicNode*>(this);}
+    virtual BasicNode* eval() {return dynamic_cast<BasicNode*>(new StringNode(str));} //同上
     StringNode(string str) {this->str=str;}
 
     string getStr() {return this->str;}
@@ -59,7 +60,7 @@ protected:
 public:
     virtual int getType() {return Variable;}
     virtual void addNode(BasicNode* node) {throw string("VariableNode no sonNode");}
-    virtual BasicNode* eval() {return dynamic_cast<BasicNode*>(this);}
+    virtual BasicNode* eval() {return dynamic_cast<BasicNode*>(this);} //变量在scope销毁时释放，所以可以返回自身
 
     bool isEmpty() {return this->isempty;}
     void setVal(BasicNode val);
@@ -94,6 +95,7 @@ public:
     Function(int parnum,ProNode* pronode=nullptr,bool VLP=false):parnum(parnum),pronode(pronode),VLP(VLP){} //普通函数（有函数体）
     Function(int parnum,canBE canBEfun,BE BEfun,bool VLP=false):
         parnum(parnum),canBEfun(canBEfun),BEfun(BEfun),VLP(VLP),iscanBE(true){} //调用到函数接口
+    ~Function() {delete pronode;}
 
     ProNode* getPronode() {return this->pronode;}
     int getParnum() {return this->parnum;}
@@ -105,7 +107,7 @@ public:
 class FunNode : public BasicNode
 {
 protected:
-    Function* funEntity;
+    Function* funEntity; //所有权在scope，不在这里析构
 public:
     virtual int getType() {return Fun;}
     virtual void addNode(BasicNode* node);

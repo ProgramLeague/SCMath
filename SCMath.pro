@@ -7,7 +7,8 @@ SOURCES += \
     ast.cpp \
     main.cpp \
     nodetype.cpp \
-    funinterface.cpp
+    funinterface.cpp \
+    scope.cpp
 
 HEADERS += \
     ast.h \
