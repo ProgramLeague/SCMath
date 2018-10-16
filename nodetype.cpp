@@ -14,15 +14,35 @@ BasicNode::~BasicNode()
     }
 }
 
-void VariableNode::setVal(BasicNode num)
+
+VariableNode::~VariableNode()
 {
-    if(isLiteral(&num))
+    delete this->val; //然后BasicNode析构
+}
+
+void VariableNode::setVal(BasicNode* num)
+{
+    if(isLiteral(num))
     {
         this->isEmpty=false;
         this->num=num;
     }
     else
         throw string("The value of a variable must be literal");
+}
+
+BasicNode* VariableNode::eval()
+{
+    if(this->isEmpty)
+        return dynamic_cast<BasicNode*>(this);
+    else
+        return this->val;
+}
+
+void VariableNode::clearVal()
+{
+    this->isempty=true;
+    delete this->val;
 }
 
 
@@ -41,13 +61,16 @@ void iterEval(BasicNode* &node)
         throw string("ProNode cannot be function's sonNode");
     else
     {
-        if(isLiteral(node)||node->getType()==Variable)
-            return; //如果是字面量和变量，自己就是求值结果，下面再重新赋值一次就重复了
+        if(isLiteral(node))
+            return; //如果是字面量，自己就是求值结果，下面再重新赋值一次就重复了
         else
         {
             BasicNode* result=node->eval();
-            delete node;
+            if(node->getType()!=Variable)
+                delete node;
             node=result; //节点的替换在这里（父节点）完成，子节点只需要返回即可
+            //对于已经赋值的变量，整体过程是用值替代本身变量在AST中的位置，不过变量本身并没有被析构，因为变量的所有权在scope（后面可能还要访问）
+            //对于未赋值的变量，求值结果是变量本身，AST没有变化
         }
     }
 }

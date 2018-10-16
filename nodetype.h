@@ -56,17 +56,17 @@ public:
 class VariableNode : public BasicNode
 {
 protected:
-    BasicNode val;
+    BasicNode* val=nullptr;
     bool isempty=true;
 public:
     virtual int getType() {return Variable;}
     virtual void addNode(BasicNode* node) {throw string("VariableNode no sonNode");}
-    virtual BasicNode* eval() {return dynamic_cast<BasicNode*>(this);}
+    virtual BasicNode* eval();
+    virtual ~VariableNode();
 
     bool isEmpty() {return this->isempty;}
-    void setVal(BasicNode val);
-    BasicNode getVal() {return this->val;}
-    void clearVal() {this->isempty=true;}
+    void setVal(BasicNode* val); //注意，传进来的应该是new出来的，传进来意味着转移所有权到本类
+    void clearVal();
 };
 
 
@@ -85,7 +85,7 @@ class Function
 {
 private:
     int parnum; //参数个数
-    ProNode* pronode; //是ret节点返回，最后一个元素视为返回值（如果没有填nullptr）
+    ProNode* pronode; //是ret节点返回，最后一个元素视为返回值（如果没有填nullptr）（fix:这个路子是错的，ret方式需要更改）
     bool VLP; //是否不进行参数个数检查
     //关于基础求值
     canBE canBEfun;
@@ -98,7 +98,7 @@ public:
         parnum(parnum),canBEfun(canBEfun),BEfun(BEfun),VLP(VLP),iscanBE(true){} //调用到函数接口
     ~Function() {delete pronode;}
 
-    ProNode* getPronode() {return this->pronode;}
+    ProNode* getFunBody() {return this->pronode;}
     int getParnum() {return this->parnum;}
     bool isVLP() {return this->VLP;}
     BasicNode* eval(vector<BasicNode *> &sonNode);
@@ -115,5 +115,5 @@ public:
     virtual BasicNode* eval();
     FunNode(Function* funEntity):funEntity(funEntity){}
 
-    ProNode* getFunBody() {return this->funEntity->getPronode();}
+    ProNode* getFunBody() {return this->funEntity->getFunBody();}
 };

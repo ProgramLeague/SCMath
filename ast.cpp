@@ -9,6 +9,8 @@ void ast::Init()
     BinOpPriority['*'] = 20;
     BinOpPriority['/'] = 20;
     BinOpPriority['^'] = 30;*/
+
+
 }
 
 bool isNum(const char &c) {
