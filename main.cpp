@@ -1,9 +1,6 @@
 #include <iostream>
 #include <string>
 #include "ast.h"
-using namespace std;
-using namespace ast;
-
 
 int main()
 {

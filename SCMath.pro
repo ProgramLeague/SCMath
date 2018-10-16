@@ -5,7 +5,11 @@ CONFIG -= qt
 
 SOURCES += \
     ast.cpp \
-    main.cpp
+    main.cpp \
+    nodetype.cpp
 
 HEADERS += \
-    ast.h
+    ast.h \
+    nodetype.h \
+    scope.h \
+    runtime.h

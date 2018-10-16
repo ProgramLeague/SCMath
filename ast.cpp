@@ -1,10 +1,8 @@
-#include"ast.h"
-
-using namespace std;
+#include "ast.h"
 using namespace ast;
 
-
-void ast::Init() {
+void ast::Init()
+{
     BinOpPriority['$'] = 0;
     BinOpPriority['+'] = 10;
     BinOpPriority['-'] = 10;
