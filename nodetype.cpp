@@ -1,5 +1,10 @@
 #include "nodetype.h"
 
+bool isLiteral(BasicNode* node) //添加新的字面量要进行修改
+{
+    return (node->getType()==Num||node->getType()==String);
+}
+
 BasicNode::~BasicNode()
 {
     for(BasicNode* node:this->sonNode)
@@ -11,7 +16,7 @@ BasicNode::~BasicNode()
 
 void VariableNode::setVal(BasicNode num)
 {
-    if(num.getType()==Num||num.getType()==String)
+    if(isLiteral(&num))
     {
         this->isEmpty=false;
         this->num=num;
@@ -36,9 +41,14 @@ void iterEval(BasicNode* &node)
         throw string("ProNode cannot be function's sonNode");
     else
     {
-        BasicNode* result=node->eval();
-        delete node;
-        node=result; //节点的替换在这里（父节点）完成，子节点只需要返回即可
+        if(isLiteral(node)||node->getType()==Variable)
+            return; //如果是字面量和变量，自己就是求值结果，下面再重新赋值一次就重复了
+        else
+        {
+            BasicNode* result=node->eval();
+            delete node;
+            node=result; //节点的替换在这里（父节点）完成，子节点只需要返回即可
+        }
     }
 }
 
@@ -46,11 +56,9 @@ BasicNode* Function::eval(vector<BasicNode *> &sonNode)
 {
     //对所有参数求值
     for(BasicNode* &node:sonNode)
-    {
         iterEval(node);
-    }
 
-    //函数求值（fix:这个是错的）
+    //函数求值
     if(this->iscanBE) //基础求值模式
     {
         if(this->canBEfun(sonNode)) //参数合法
@@ -58,7 +66,7 @@ BasicNode* Function::eval(vector<BasicNode *> &sonNode)
         else
             throw string("sonNode type mismatch");
     }
-    else //不能基础求值就是正常有函数体Pro的
+    else //不能基础求值就是正常有函数体Pro的（fix:从这里开始就是错的）
     {
         vector<BasicNode*>&funbody=this->pronode->sonNode;
         for(int i=0;i<funbody.size()-1;i++) //最后一个可能是返回值，先留着后面单独处理

@@ -16,6 +16,7 @@ public:
     virtual BasicNode* eval();
     virtual ~BasicNode();
 
+    //fix:这个不对劲，准备删掉
     void setRet() {this->isRet=true;} //不可eval节点设置ret无效
     bool getRet() {return this->isRet;}
     vector<BasicNode*> sonNode;
@@ -31,7 +32,7 @@ protected:
 public:
     virtual int getType() {return Num;}
     virtual void addNode(BasicNode *node) {throw string("NumNode no sonNode");}
-    virtual BasicNode* eval() {return dynamic_cast<BasicNode*>(new NumNode(num));} //字面量在计算后将会析构，这里要new新的
+    virtual BasicNode* eval() {return dynamic_cast<BasicNode*>(this);}
     NumNode(double num) {this->num=num;}
 
     double getNum() {return this->num;}
@@ -45,7 +46,7 @@ protected:
 public:
     virtual int getType() {return String;}
     virtual void addNode(BasicNode *node) {throw string("String no sonNode");}
-    virtual BasicNode* eval() {return dynamic_cast<BasicNode*>(new StringNode(str));} //同上
+    virtual BasicNode* eval() {return dynamic_cast<BasicNode*>(this);}
     StringNode(string str) {this->str=str;}
 
     string getStr() {return this->str;}
@@ -60,7 +61,7 @@ protected:
 public:
     virtual int getType() {return Variable;}
     virtual void addNode(BasicNode* node) {throw string("VariableNode no sonNode");}
-    virtual BasicNode* eval() {return dynamic_cast<BasicNode*>(this);} //变量在scope销毁时释放，所以可以返回自身
+    virtual BasicNode* eval() {return dynamic_cast<BasicNode*>(this);}
 
     bool isEmpty() {return this->isempty;}
     void setVal(BasicNode val);
