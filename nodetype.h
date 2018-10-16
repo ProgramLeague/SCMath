@@ -91,7 +91,7 @@ public:
 };
 
 
-class FunNode :public BasicNode
+class FunNode : public BasicNode
 {
 protected:
     Function* funEntity;

@@ -41,5 +41,12 @@ void FunNode::addNode(BasicNode *node)
 
 BasicNode* FunNode::eval()
 {
-    //fix:这里递归，还需要考虑
+    ProNode* funBody=this->getFunBody();
+    for(int i=0;i<funBody->sonNode.size()-1;i++) //fix:最后一个是返回值？？先不搞
+    {
+        BasicNode* &node=funBody->sonNode.at(i);
+        if(node->getType()==Fun)
+            node=dynamic_cast<FunNode*>(node)->eval(); //节点的替换在这里（父节点）完成，子节点只需要返回即可
+    }
+
 }
