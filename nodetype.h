@@ -4,7 +4,7 @@
 #include <functional>
 using namespace std;
 
-enum nodeType{Num,String,Variable,Pro,Fun};
+enum nodeType{Num,String,Var,Pro,Fun};
 
 class BasicNode //不可直接创建对象
 {
@@ -53,21 +53,22 @@ public:
 };
 
 
-class VariableNode : public BasicNode
+class VarNode : public BasicNode
 {
 protected:
     BasicNode* val=nullptr;
-    bool isempty=true;
+    int valtype=-1;
 public:
-    virtual int getType() {return Variable;}
+    virtual int getType() {return Var;}
     virtual void addNode(BasicNode* node) {throw string("VariableNode no sonNode");}
     virtual BasicNode* eval();
-    virtual ~VariableNode();
+    virtual ~VarNode();
 
     bool isEmpty() {return this->isempty;}
     void setVal(BasicNode* val); //注意，传进来的应该是new出来的，传进来意味着转移所有权到本类
     void clearVal();
 };
+typedef VarNode Variable;
 
 
 class ProNode : public BasicNode

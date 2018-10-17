@@ -9,39 +9,50 @@ BasicNode::~BasicNode()
 {
     for(BasicNode* node:this->sonNode)
     {
-        if(node->getType()!=Variable) //这个随着域释放，不被连环析构
+        if(node->getType()!=Var) //这个随着域释放，不被连环析构
             delete node;
     }
 }
 
 
-VariableNode::~VariableNode()
+VarNode::~VarNode()
 {
     delete this->val; //然后BasicNode析构
 }
 
-void VariableNode::setVal(BasicNode* num)
+bool VarNode::isEmpty()
 {
-    if(isLiteral(num))
-    {
-        this->isEmpty=false;
-        this->num=num;
-    }
-    else
-        throw string("The value of a variable must be literal");
+    return (this->valtype==-1);
 }
 
-BasicNode* VariableNode::eval()
+void VarNode::setVal(BasicNode* num)
 {
-    if(this->isEmpty)
+    switch (num->getType())
+    {
+    case Num:
+        this->valtype=Num;
+        break;
+    case String:
+        this->valtype=String;
+        break;
+    default:
+        throw string("The value of a variable must be literal");
+        break;
+    }
+    this->num=num;
+}
+
+BasicNode* VarNode::eval()
+{
+    if(this->isEmpty())
         return dynamic_cast<BasicNode*>(this);
     else
         return this->val;
 }
 
-void VariableNode::clearVal()
+void VarNode::clearVal()
 {
-    this->isempty=true;
+    this->valtype=-1;
     delete this->val;
 }
 
@@ -66,7 +77,7 @@ void iterEval(BasicNode* &node)
         else
         {
             BasicNode* result=node->eval();
-            if(node->getType()!=Variable)
+            if(node->getType()!=Var)
                 delete node;
             node=result; //节点的替换在这里（父节点）完成，子节点只需要返回即可
             //对于已经赋值的变量，整体过程是用值替代本身变量在AST中的位置，不过变量本身并没有被析构，因为变量的所有权在scope（后面可能还要访问）
