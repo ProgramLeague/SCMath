@@ -1,6 +1,5 @@
 #include "ast.h"
 #include "funinterface.h"
-#include "runtime.h"
 using namespace ast;
 
 void ast::Init()
@@ -11,10 +10,10 @@ void ast::Init()
     Function* mul=new Function(2,BinOp::isBinOp,BinOp::mul);
     Function* div=new Function(2,BinOp::isBinOp,BinOp::div);
     //将这些函数置入函数域
-    runtime::globalScope.addFunction("+",add);
-    runtime::globalScope.addFunction("-",sub);
-    runtime::globalScope.addFunction("*",mul);
-    runtime::globalScope.addFunction("/",div);
+    record::globalScope.addFunction("+",add);
+    record::globalScope.addFunction("-",sub);
+    record::globalScope.addFunction("*",mul);
+    record::globalScope.addFunction("/",div);
     //Function* entity=runtime::globalScope.functionList["+"]; //在parse阶段，可以这样从函数域中找到函数名对应的函数实体
     //FunNode* testNode=new FunNode(entity); //然后这样通过函数实体创建相应的函数节点
 }

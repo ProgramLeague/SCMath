@@ -6,7 +6,12 @@
 using namespace std;
 #include "nodetype.h"
 #include "scope.h"
-#include "runtime.h"
+
+class record
+{
+public:
+    static Scope globalScope;
+};
 
 namespace ast
 {

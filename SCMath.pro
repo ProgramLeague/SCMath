@@ -14,7 +14,6 @@ HEADERS += \
     ast.h \
     nodetype.h \
     scope.h \
-    runtime.h \
     funinterface.h
 
 QMAKE_CXXFLAGS += -std=c++14
