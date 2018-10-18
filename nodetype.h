@@ -34,6 +34,7 @@ public:
     virtual void addNode(BasicNode *node) {throw string("NumNode no sonNode");}
     virtual BasicNode* eval() {return dynamic_cast<BasicNode*>(this);}
     NumNode(double num) {this->num=num;}
+    NumNode(NumNode* node) {this->num=node->num;}
 
     double getNum() {return this->num;}
 };
@@ -48,6 +49,7 @@ public:
     virtual void addNode(BasicNode *node) {throw string("String no sonNode");}
     virtual BasicNode* eval() {return dynamic_cast<BasicNode*>(this);}
     StringNode(string str) {this->str=str;}
+    StringNode(StringNode* node) {this->str=node->str;}
 
     string getStr() {return this->str;}
 };
@@ -68,8 +70,9 @@ public:
     bool isEmpty() {return (this->valtype==-1);}
     int getValType() {return this->valtype;}
     bool getOwnership() {return this->isownership;}
-    void setVal(BasicNode* val); //用这个传进来意味着转移所有权到本类
-    void setBorrowVal(BasicNode* val); //用这个不转移所有权
+    void setVal(BasicNode* val); //直接对值进行赋值，用这个传进来意味着转移所有权到本类（一般赋值为字面量用）
+    void setBorrowVal(BasicNode* val); //直接对值进行赋值，用这个不转移所有权（一般赋值为变量指针用）
+    void setVarVal(VarNode* node); //传递变量的值到this的值，即需要进行一次解包
     void clearVal();
 };
 typedef VarNode Variable;
