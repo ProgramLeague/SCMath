@@ -20,11 +20,6 @@ VarNode::~VarNode()
     delete this->val; //然后BasicNode析构
 }
 
-bool VarNode::isEmpty()
-{
-    return (this->valtype==-1);
-}
-
 void VarNode::setVal(BasicNode* num)
 {
     switch (num->getType())
@@ -123,5 +118,7 @@ BasicNode* Function::eval(vector<BasicNode *> &sonNode)
 
 BasicNode* FunNode::eval()
 {
+    if(this->funEntity==nullptr)
+        throw String("funEntity is null");
     return this->funEntity->eval(this->sonNode);
 }

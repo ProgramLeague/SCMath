@@ -64,7 +64,7 @@ public:
     virtual BasicNode* eval();
     virtual ~VarNode();
 
-    bool isEmpty() {return this->isempty;}
+    bool isEmpty() {return (this->valtype==-1);}
     void setVal(BasicNode* val); //注意，传进来的应该是new出来的，传进来意味着转移所有权到本类
     void clearVal();
 };
@@ -114,7 +114,9 @@ public:
     virtual int getType() {return Fun;}
     virtual void addNode(BasicNode* node);
     virtual BasicNode* eval();
-    FunNode(Function* funEntity):funEntity(funEntity){}
+    FunNode(Function* funEntity=nullptr):funEntity(funEntity){}
 
+    bool haveEntity() {return this->funEntity!=nullptr;}
+    void setEntity(Function* funEntity) {this->funEntity=funEntity;}
     ProNode* getFunBody() {return this->funEntity->getFunBody();}
 };
