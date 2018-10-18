@@ -1,16 +1,22 @@
 #include "ast.h"
+#include "funinterface.h"
+#include "runtime.h"
 using namespace ast;
 
 void ast::Init()
 {
-    /*BinOpPriority['$'] = 0;
-    BinOpPriority['+'] = 10;
-    BinOpPriority['-'] = 10;
-    BinOpPriority['*'] = 20;
-    BinOpPriority['/'] = 20;
-    BinOpPriority['^'] = 30;*/
-
-
+    //初始化所有二元运算符函数实体
+    Function* add=new Function(2,BinOp::isBinOp,BinOp::add);
+    Function* sub=new Function(2,BinOp::isBinOp,BinOp::sub);
+    Function* mul=new Function(2,BinOp::isBinOp,BinOp::mul);
+    Function* div=new Function(2,BinOp::isBinOp,BinOp::div);
+    //将这些函数置入函数域
+    runtime::globalScope.addFunction("+",add);
+    runtime::globalScope.addFunction("-",sub);
+    runtime::globalScope.addFunction("*",mul);
+    runtime::globalScope.addFunction("/",div);
+    //Function* entity=runtime::globalScope.functionList["+"]; //在parse阶段，可以这样从函数域中找到函数名对应的函数实体
+    //FunNode* testNode=new FunNode(entity); //然后这样通过函数实体创建相应的函数节点
 }
 
 bool isNum(const char &c) {

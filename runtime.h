@@ -3,5 +3,6 @@
 
 class runtime
 {
+public:
     static Scope globalScope;
 };
