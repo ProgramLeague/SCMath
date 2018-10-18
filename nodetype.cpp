@@ -17,24 +17,24 @@ BasicNode::~BasicNode()
 
 VarNode::~VarNode()
 {
-    delete this->val; //然后BasicNode析构
+    if(this->isownership)
+        delete this->val;
+    //然后BasicNode析构
 }
 
-void VarNode::setVal(BasicNode* num)
+void VarNode::setVal(BasicNode* val)
 {
-    switch (num->getType())
-    {
-    case Num:
-        this->valtype=Num;
-        break;
-    case String:
-        this->valtype=String;
-        break;
-    default:
-        throw string("The value of a variable must be literal");
-        break;
-    }
-    this->num=num;
+    if(val->getType()==Pro)
+        throw String("Pro cannot be used as value");
+    this->valtype=val->getType();
+    this->isownership=true;
+    this->val=val;
+}
+
+void VarNode::setBorrowVal(BasicNode *val)
+{
+    this->setVal(val);
+    this->isownership=false;
 }
 
 BasicNode* VarNode::eval()
