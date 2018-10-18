@@ -66,6 +66,8 @@ public:
     virtual ~VarNode();
 
     bool isEmpty() {return (this->valtype==-1);}
+    int getValType() {return this->valtype;}
+    bool getOwnership() {return this->isownership;}
     void setVal(BasicNode* val); //用这个传进来意味着转移所有权到本类
     void setBorrowVal(BasicNode* val); //用这个不转移所有权
     void clearVal();

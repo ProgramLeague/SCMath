@@ -17,7 +17,7 @@ BasicNode::~BasicNode()
 
 VarNode::~VarNode()
 {
-    if(this->isownership)
+    if((!this->isEmpty())&&this->isownership)
         delete this->val;
     //然后BasicNode析构
 }
@@ -26,6 +26,7 @@ void VarNode::setVal(BasicNode* val)
 {
     if(val->getType()==Pro)
         throw String("Pro cannot be used as value");
+    //warn:理论上讲按照目前的设计，变量和函数不应作为具有所有权的值，但在此暂不进行检查。如果进行检查，直接在此处添加
     this->valtype=val->getType();
     this->isownership=true;
     this->val=val;
@@ -33,8 +34,11 @@ void VarNode::setVal(BasicNode* val)
 
 void VarNode::setBorrowVal(BasicNode *val)
 {
-    this->setVal(val);
+    if(val->getType()==Pro)
+        throw String("Pro cannot be used as value");
+    this->valtype=val->getType();
     this->isownership=false;
+    this->val=val;
 }
 
 BasicNode* VarNode::eval()
@@ -43,12 +47,15 @@ BasicNode* VarNode::eval()
         return dynamic_cast<BasicNode*>(this);
     else
         return this->val;
+    //注意，多级指针也只会解包一次
 }
 
 void VarNode::clearVal()
 {
+    //这里不进行是否为空的检查了
     this->valtype=-1;
-    delete this->val;
+    if(this->isownership)
+        delete this->val;
 }
 
 
@@ -63,7 +70,7 @@ void FunNode::addNode(BasicNode *node)
 
 void iterEval(BasicNode* &node)
 {
-    if(node->getType()==Pro) //按正常函数里面不要套Pro，不过考虑到某些原因……这里做个检查，以后奇葩的支持了也方便改
+    if(node->getType()==Pro) //按正常函数里面不要套Pro
         throw string("ProNode cannot be function's sonNode");
     else
     {
