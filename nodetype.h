@@ -9,16 +9,16 @@ enum nodeType{Num,String,Var,Pro,Fun,VarRef};
 class BasicNode //不可直接创建对象
 {
 protected:
-    bool isRet=false;
+    bool retFlag=false;
 public:
     virtual int getType();
     virtual void addNode(BasicNode* node) {this->sonNode.push_back(node);} //使用该方法添加成员可查错
     virtual BasicNode* eval();
     virtual ~BasicNode();
 
-    //fix:这个不对劲，准备删掉
-    void setRet() {this->isRet=true;} //不可eval节点设置ret无效
-    bool getRet() {return this->isRet;}
+    //fix:这个ret的实现方法可能不太对劲
+    void setRet() {this->retFlag=true;} //不可eval节点设置ret无效
+    bool isRet() {return this->retFlag;}
     vector<BasicNode*> sonNode;
 };
 typedef function<bool(vector<BasicNode*>&sonNode)>canBE; //检测函数基础求值参数表是否合法
@@ -34,7 +34,7 @@ public:
     virtual void addNode(BasicNode *node) {throw string("NumNode no sonNode");}
     virtual BasicNode* eval() {return dynamic_cast<BasicNode*>(this);}
     NumNode(double num) {this->num=num;}
-    NumNode(NumNode* node) {this->num=node->num;}
+    NumNode(NumNode* node):num(node->num){}
 
     double getNum() {return this->num;}
 };
@@ -49,7 +49,7 @@ public:
     virtual void addNode(BasicNode *node) {throw string("String no sonNode");}
     virtual BasicNode* eval() {return dynamic_cast<BasicNode*>(this);}
     StringNode(string str) {this->str=str;}
-    StringNode(StringNode* node) {this->str=node->str;}
+    StringNode(StringNode* node):str(node->str){}
 
     string getStr() {return this->str;}
 };
@@ -59,19 +59,22 @@ class VarNode : public BasicNode
 {
 protected:
     BasicNode* val=nullptr;
-    int valtype=-1;
-    bool isownership;
+    bool typeRestrictFlag=false;
+    int valtype;
+    bool ownershipFlag;
+
+    void assignmentChecking(BasicNode* val);
 public:
     virtual int getType() {return Var;}
     virtual void addNode(BasicNode* node) {throw string("VariableNode no sonNode");}
     virtual BasicNode* eval();
     virtual ~VarNode();
-    VarNode(){}
-    VarNode(VarNode* node); //这个其实没什么用，很想删掉
+    VarNode(int valtype=-1);
 
-    bool isEmpty() {return (this->valtype==-1);}
+    bool isEmpty() {return (this->val==nullptr);}
+    bool istypeRestrict() {this->typeRestrictFlag;}
     int getValType() {return this->valtype;}
-    bool getOwnership() {return this->isownership;}
+    bool isOwnership() {return this->ownershipFlag;}
     void setVal(BasicNode* val); //直接对值进行赋值，用这个传进来意味着转移所有权到本类（一般赋值为字面量用）
     void setBorrowVal(BasicNode* val); //直接对值进行赋值，用这个不转移所有权（一般赋值为变量指针用）
     void setVarVal(VarNode* node); //传递变量的值到this的值，即需要进行一次解包
@@ -84,9 +87,11 @@ class VarRefNode : public BasicNode
 {
 protected:
     BasicNode* val=nullptr;
-    int valtype=-1;
-    bool isownership;
+    bool typeRestrictFlag=false;
+    int valtype;
+    bool ownershipFlag;
 
+    void assignmentChecking(BasicNode* val);
     void setVal(BasicNode* val);
     void setBorrowVal(BasicNode* val);
 public:
@@ -94,13 +99,14 @@ public:
     virtual void addNode(BasicNode* node) {throw string("VarRefNode no sonNode");}
     virtual ~VarRefNode();
     virtual BasicNode* eval(); //eval结果是目前形参绑定到的实参
+    VarRefNode(int valtype=-1);
 
     void bind(BasicNode* val);
     void unbind();
     bool isbind() {return (this->val!=nullptr);}
-    bool getOwnership() {return this->isownership;}
+    //因为本类对象只作为其值的一个别名使用，所以不提供任何属性的访问器
 };
-typedef VarRefNode VarReference;
+typedef VarRefNode VarReference; //同上
 
 
 class ProNode : public BasicNode
@@ -119,13 +125,16 @@ class Function
 {
 private:
     int parnum; //参数个数
-    ProNode* pronode; //是ret节点返回，最后一个元素视为返回值（如果没有填nullptr）（fix:这个路子是错的，ret方式需要更改）
     bool VLP; //是否不进行参数个数检查
     //关于基础求值
     canBE canBEfun;
     BE BEfun;
     bool iscanBE=false;
-    //BasicNode* basicEval(vector<BasicNode *> &sonNode); //直接在eval里写了，这里消掉
+    //关于pro求值
+    ProNode* pronode; //是ret节点返回，最后一个元素视为返回值（如果没有填nullptr）（fix:这个ret路子可能是错的）
+    vector<VarReference*>formalParList; //形参列表，持有所有权。（warn:用了这种方法将很难并行化，一个函数实体同时只能被一组实参占用）
+    void unbindFormalPar();
+    void bindFormalPar(vector<BasicNode*>&sonNode);
 public:
     Function(int parnum,ProNode* pronode=nullptr,bool VLP=false):parnum(parnum),pronode(pronode),VLP(VLP){} //普通函数（有函数体）
     Function(int parnum,canBE canBEfun,BE BEfun,bool VLP=false):
@@ -135,6 +144,7 @@ public:
     ProNode* getFunBody() {return this->pronode;}
     int getParnum() {return this->parnum;}
     bool isVLP() {return this->VLP;}
+    void addFormalPar(VarReference* var); //先在外面new好，然后转移所有权进来
     BasicNode* eval(vector<BasicNode *> &sonNode);
 };
 
@@ -149,7 +159,7 @@ public:
     virtual BasicNode* eval();
     FunNode(Function* funEntity=nullptr):funEntity(funEntity){}
 
-    bool haveEntity() {return this->fsunEntity!=nullptr;}
+    bool haveEntity() {return this->funEntity!=nullptr;}
     void setEntity(Function* funEntity) {this->funEntity=funEntity;}
     ProNode* getFunBody() {return this->funEntity->getFunBody();}
 };

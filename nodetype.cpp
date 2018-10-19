@@ -33,37 +33,43 @@ BasicNode::~BasicNode()
     }
 }
 
-VarNode::VarNode(VarNode *node)
+
+VarNode::VarNode(int valtype)
 {
-    //fix:此处不考虑拷贝Ret相关信息，如果Ret信息最后确定不删掉这里要加上
-    this->val=node->eval();
-    this->valtype=node->getValType();
-    this->isownership=node->getOwnership();
+    this->valtype=valtype;
+    if(valtype!=-1)
+        this->typeRestrictFlag=true;
 }
 
 VarNode::~VarNode()
 {
-    if((!this->isEmpty())&&this->isownership)
+    if((!this->isEmpty())&&this->ownershipFlag)
         delete this->val;
     //然后BasicNode析构
 }
 
-void VarNode::setVal(BasicNode* val)
+void VarNode::assignmentChecking(BasicNode *val)
 {
     if(isNotAssignable(val))
         throw string("Type of val cannot be used as value");
+    if(this->typeRestrictFlag&&val->getType()!=this->valtype)
+        throw string("type mismatch");
+}
+
+void VarNode::setVal(BasicNode* val)
+{
+    this->assignmentChecking(val);
     //warn:理论上讲按照目前的设计，变量不应作为具有所有权的值（因为所有权在运行时域），但在此暂不进行检查。如果进行检查，直接在此处添加
     this->valtype=val->getType();
-    this->isownership=true;
+    this->ownershipFlag=true;
     this->val=val;
 }
 
 void VarNode::setBorrowVal(BasicNode *val)
 {
-    if(isNotAssignable(val))
-        throw string("Type of val cannot be used as value");
+    this->assignmentChecking(val);
     this->valtype=val->getType();
-    this->isownership=false;
+    this->ownershipFlag=false;
     this->val=val;
 }
 
@@ -92,23 +98,31 @@ BasicNode* VarNode::eval()
 void VarNode::clearVal()
 {
     //调用前应进行是否为空的检查，否则有所有权的情况下会delete nullptr
-    this->valtype=-1;
-    if(this->isownership)
+    if(this->ownershipFlag)
+    {
         delete this->val;
+        this->val=nullptr;
+    }
 }
 
 
+VarRefNode::VarRefNode(int valtype)
+{
+    this->valtype=valtype;
+    if(valtype!=-1)
+        this->typeRestrictFlag=true;
+}
+
 VarRefNode::~VarRefNode()
 {
-    if(this->getOwnership()&&this->isbind()) //一般来讲应该不会出现在绑定（函数调用期间）就释放实体的情况
+    if(this->isOwnership()&&this->isbind()) //一般来讲应该不会出现在绑定（函数调用期间）就释放实体的情况
         delete this->val;
 }
 
 void VarRefNode::unbind()
 {
     //调用前应进行是否为空的检查，否则有所有权的情况下会delete nullptr
-    this->valtype=-1;
-    if(this->getOwnership())
+    if(this->isOwnership())
         delete this->val;
 }
 
@@ -122,23 +136,30 @@ BasicNode* VarRefNode::eval()
 void VarRefNode::setVal(BasicNode* val)
 {
     this->valtype=val->getType();
-    this->isownership=true;
+    this->ownershipFlag=true;
     this->val=val;
 }
 
 void VarRefNode::setBorrowVal(BasicNode *val)
 {
+    if(val->getType()==Var&&dynamic_cast<Variable*>(val)->isEmpty()) //按目前情况，传过来的只可能是Var，第一个条件有点多余
+        throw string("Variable do not have values");
     this->valtype=val->getType();
-    this->isownership=false;
+    this->ownershipFlag=false;
     this->val=val;
+}
+
+void VarRefNode::assignmentChecking(BasicNode *val)
+{
+    if(isNotAssignable(val))
+        throw string("Type of val cannot be used as value");
+    if(this->typeRestrictFlag&&val->getType()!=this->valtype)
+        throw string("type mismatch");
 }
 
 void VarRefNode::bind(BasicNode *val)
 {
-    if(val->isEmpty())
-        throw string("Variable do not have values");
-    if(isNotAssignable(val))
-        throw string("Type of val cannot be used as value");
+    this->assignmentChecking(val);
     //目前策略为：字面量进行拷贝（有所有权），变量作为无所有权指针传递
     if(isLiteral(val))
         this->setVal(copyVal(val));
@@ -157,7 +178,15 @@ void FunNode::addNode(BasicNode *node)
     this->sonNode.push_back(node);
 }
 
-void iterEval(BasicNode* &node)
+BasicNode* FunNode::eval()
+{
+    if(this->funEntity==nullptr)
+        throw String("funEntity is null");
+    return this->funEntity->eval(this->sonNode);
+}
+
+
+void recursionEval(BasicNode* &node)
 {
     if(node->getType()==Pro) //按正常函数里面不要套Pro
         throw string("ProNode cannot be function's sonNode");
@@ -181,7 +210,7 @@ BasicNode* Function::eval(vector<BasicNode *> &sonNode)
 {
     //对所有参数求值
     for(BasicNode* &node:sonNode)
-        iterEval(node);
+        recursionEval(node);
 
     //函数求值
     if(this->iscanBE) //基础求值模式
@@ -191,12 +220,13 @@ BasicNode* Function::eval(vector<BasicNode *> &sonNode)
         else
             throw string("sonNode type mismatch");
     }
-    else //不能基础求值就是正常有函数体Pro的（fix:从这里开始就是错的）
+    else //不能基础求值就是正常有函数体Pro的
     {
+        this->bindFormalPar(sonNode); //子节点绑定到实参
         vector<BasicNode*>&funbody=this->pronode->sonNode;
         for(int i=0;i<funbody.size()-1;i++) //最后一个可能是返回值，先留着后面单独处理
         {
-            iterEval(funbody.at(i));
+            recursionEval(funbody.at(i));
             if(funbody.at(i)->getRet())
                 return funbody.at(i);
         }
@@ -206,15 +236,32 @@ BasicNode* Function::eval(vector<BasicNode *> &sonNode)
             return nullptr;
         else
         {
-            iterEval(lastnode);
+            recursionEval(lastnode);
             return lastnode;
         }
+        this->unbindFormalPar();
     }
 }
 
-BasicNode* FunNode::eval()
+void Function::addFormalPar(VarReference *var)
 {
-    if(this->funEntity==nullptr)
-        throw String("funEntity is null");
-    return this->funEntity->eval(this->sonNode);
+    if(this->formalParList.size()+1>this->getParnum())
+        throw string("Exceeding the number of parameters");
+}
+
+void Function::unbindFormalPar()
+{
+    for(VarReference* i:this->formalParList)
+        i->unbind();
+}
+
+void Function::bindFormalPar(vector<BasicNode *> &sonNode)
+{
+    if(sonNode.size()!=this->formalParList.size())
+        throw string("sonNode number mismatch");
+    for(int i=0;i<this->formalParList.size();i++)
+    {
+        VarReference* formalpar=this->formalParList.at(i);
+        formalpar->bind(sonNode.at(i));
+    }
 }
