@@ -67,7 +67,7 @@ public:
     virtual BasicNode* eval();
     virtual ~VarNode();
     VarNode(){}
-    VarNode(VarNode* node);
+    VarNode(VarNode* node); //这个其实没什么用，很想删掉
 
     bool isEmpty() {return (this->valtype==-1);}
     int getValType() {return this->valtype;}
@@ -92,14 +92,15 @@ protected:
 public:
     virtual int getType() {return VarRef;}
     virtual void addNode(BasicNode* node) {throw string("VarRefNode no sonNode");}
-    virtual ~VarRefNode(); //实参在绑定到VarRef时进行复制，因此本类对象具备所有权
+    virtual ~VarRefNode();
     virtual BasicNode* eval(); //eval结果是目前形参绑定到的实参
 
-    void bind(BasicNode* val); //传进来的是求值后且已经拷贝完毕的实参，传进来即转移所有权（拷贝的过程由函数的eval完成）
+    void bind(BasicNode* val);
     void unbind();
     bool isbind() {return (this->val!=nullptr);}
     bool getOwnership() {return this->isownership;}
 };
+typedef VarRefNode VarReference;
 
 
 class ProNode : public BasicNode

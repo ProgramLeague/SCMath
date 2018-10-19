@@ -11,19 +11,14 @@ bool isNotAssignable(BasicNode* node) //是否不可赋值给变量，支持新�
     //fix:目前暂不支持函数指针，因为函数实体的变量表示还没设计好
 }
 
-bool canCopy(BasicNode* node) //是否可以拷贝（作为值类型）
-{
-    return (isLiteral(node)||node->getType()==Var);
-}
-
 BasicNode* copyVal(BasicNode* oriVal) //（值类型）拷贝
 {
-    //调用前应该调用canCopy对参数进行检查
+    //调用前应该对参数类型进行检查
     if(oriVal->getType()==Num)
         return new NumNode(dynamic_cast<NumNode*>(oriVal));
     if(oriVal->getType()==String)
         return new StringNode(dynamic_cast<StringNode*>(oriVal));
-    if(oriVal->getType()==Var)
+    if(oriVal->getType()==Var) //其实这个还是没什么用
         return new Variable(dynamic_cast<Variable*>(oriVal));
     //支持更多具拷贝构造函数类型（尤其是字面量）后还需要在此处进行添加
     return nullptr; //如果进行参数检查了不会走到这一步
