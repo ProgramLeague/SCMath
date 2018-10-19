@@ -1,5 +1,5 @@
 TEMPLATE = app
-CONFIG += console c++11
+CONFIG += console c++14
 CONFIG -= app_bundle
 CONFIG -= qt
 
@@ -15,5 +15,3 @@ HEADERS += \
     nodetype.h \
     scope.h \
     funinterface.h
-
-QMAKE_CXXFLAGS += -std=c++14

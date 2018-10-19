@@ -72,7 +72,7 @@ public:
     VarNode(int valtype=-1);
 
     bool isEmpty() {return (this->val==nullptr);}
-    bool istypeRestrict() {this->typeRestrictFlag;}
+    bool istypeRestrict() {return this->typeRestrictFlag;}
     int getValType() {return this->valtype;}
     bool isOwnership() {return this->ownershipFlag;}
     void setVal(BasicNode* val); //直接对值进行赋值，用这个传进来意味着转移所有权到本类（一般赋值为字面量用）
@@ -124,7 +124,7 @@ public:
 class Function
 {
 private:
-    int parnum; //参数个数
+    unsigned int parnum; //参数个数
     bool VLP; //是否不进行参数个数检查
     //关于基础求值
     canBE canBEfun;
@@ -136,13 +136,13 @@ private:
     void unbindFormalPar();
     void bindFormalPar(vector<BasicNode*>&sonNode);
 public:
-    Function(int parnum,ProNode* pronode=nullptr,bool VLP=false):parnum(parnum),pronode(pronode),VLP(VLP){} //普通函数（有函数体）
-    Function(int parnum,canBE canBEfun,BE BEfun,bool VLP=false):
+    Function(unsigned int parnum,ProNode* pronode=nullptr,bool VLP=false):parnum(parnum),pronode(pronode),VLP(VLP){} //普通函数（有函数体）
+    Function(unsigned int parnum,canBE canBEfun,BE BEfun,bool VLP=false):
         parnum(parnum),canBEfun(canBEfun),BEfun(BEfun),VLP(VLP),iscanBE(true){} //调用到函数接口
     ~Function() {delete pronode;}
 
     ProNode* getFunBody() {return this->pronode;}
-    int getParnum() {return this->parnum;}
+    unsigned int getParnum() {return this->parnum;}
     bool isVLP() {return this->VLP;}
     void addFormalPar(VarReference* var); //先在外面new好，然后转移所有权进来
     BasicNode* eval(vector<BasicNode *> &sonNode);

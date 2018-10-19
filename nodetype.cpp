@@ -5,7 +5,7 @@ bool isLiteral(BasicNode* node) //是否为字面量，添加新的字面量要�
     return (node->getType()==Num||node->getType()==String);
 }
 
-bool isNotAssignable(BasicNode* node) //是否不可赋值给变量，支持新的值类型要进行修改
+bool isNotAssignable(BasicNode* val) //是否不可赋值给变量，支持新的值类型要进行修改
 {
     return (val->getType()==Pro||val->getType()==Fun);
     //fix:目前暂不支持函数指针，因为函数实体的变量表示还没设计好
@@ -18,9 +18,7 @@ BasicNode* copyVal(BasicNode* oriVal) //（值类型）拷贝
         return new NumNode(dynamic_cast<NumNode*>(oriVal));
     if(oriVal->getType()==String)
         return new StringNode(dynamic_cast<StringNode*>(oriVal));
-    if(oriVal->getType()==Var) //其实这个还是没什么用
-        return new Variable(dynamic_cast<Variable*>(oriVal));
-    //支持更多具拷贝构造函数类型（尤其是字面量）后还需要在此处进行添加
+    //支持更多具拷贝构造函数类型（目前都是字面量）后还需要在此处进行添加
     return nullptr; //如果进行参数检查了不会走到这一步
 }
 
@@ -115,14 +113,14 @@ VarRefNode::VarRefNode(int valtype)
 
 VarRefNode::~VarRefNode()
 {
-    if(this->isOwnership()&&this->isbind()) //一般来讲应该不会出现在绑定（函数调用期间）就释放实体的情况
+    if(this->ownershipFlag&&this->isbind()) //一般来讲应该不会出现在绑定（函数调用期间）就释放实体的情况
         delete this->val;
 }
 
 void VarRefNode::unbind()
 {
     //调用前应进行是否为空的检查，否则有所有权的情况下会delete nullptr
-    if(this->isOwnership())
+    if(this->ownershipFlag)
         delete this->val;
 }
 
@@ -181,7 +179,7 @@ void FunNode::addNode(BasicNode *node)
 BasicNode* FunNode::eval()
 {
     if(this->funEntity==nullptr)
-        throw String("funEntity is null");
+        throw string("funEntity is null");
     return this->funEntity->eval(this->sonNode);
 }
 
@@ -227,7 +225,7 @@ BasicNode* Function::eval(vector<BasicNode *> &sonNode)
         for(int i=0;i<funbody.size()-1;i++) //最后一个可能是返回值，先留着后面单独处理
         {
             recursionEval(funbody.at(i));
-            if(funbody.at(i)->getRet())
+            if(funbody.at(i)->isRet())
                 return funbody.at(i);
         }
         //前面都不是返回值，最后一个是
@@ -247,6 +245,7 @@ void Function::addFormalPar(VarReference *var)
 {
     if(this->formalParList.size()+1>this->getParnum())
         throw string("Exceeding the number of parameters");
+    this->formalParList.push_back(var);
 }
 
 void Function::unbindFormalPar()
