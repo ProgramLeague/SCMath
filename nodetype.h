@@ -11,9 +11,9 @@ class BasicNode //不可直接创建对象
 protected:
     bool retFlag=false;
 public:
-    virtual int getType();
+    virtual int getType()=0;
     virtual void addNode(BasicNode* node) {this->sonNode.push_back(node);} //使用该方法添加成员可查错
-    virtual BasicNode* eval();
+    virtual BasicNode* eval()=0;
     virtual ~BasicNode();
 
     //fix:这个ret的实现方法可能不太对劲
