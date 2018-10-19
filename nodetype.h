@@ -4,7 +4,7 @@
 #include <functional>
 using namespace std;
 
-enum nodeType{Num,String,Var,Pro,Fun};
+enum nodeType{Num,String,Var,Pro,Fun,VarRef};
 
 class BasicNode //不可直接创建对象
 {
@@ -66,6 +66,8 @@ public:
     virtual void addNode(BasicNode* node) {throw string("VariableNode no sonNode");}
     virtual BasicNode* eval();
     virtual ~VarNode();
+    VarNode(){}
+    VarNode(VarNode* node);
 
     bool isEmpty() {return (this->valtype==-1);}
     int getValType() {return this->valtype;}
@@ -75,7 +77,29 @@ public:
     void setVarVal(VarNode* node); //传递变量的值到this的值，即需要进行一次解包
     void clearVal();
 };
-typedef VarNode Variable;
+typedef VarNode Variable; //内存实体是Variable，其指针才作为节点（不像某些节点一样是遇到一个就new一次），参考函数实体和函数节点的思想
+
+
+class VarRefNode : public BasicNode
+{
+protected:
+    BasicNode* val=nullptr;
+    int valtype=-1;
+    bool isownership;
+
+    void setVal(BasicNode* val);
+    void setBorrowVal(BasicNode* val);
+public:
+    virtual int getType() {return VarRef;}
+    virtual void addNode(BasicNode* node) {throw string("VarRefNode no sonNode");}
+    virtual ~VarRefNode(); //实参在绑定到VarRef时进行复制，因此本类对象具备所有权
+    virtual BasicNode* eval(); //eval结果是目前形参绑定到的实参
+
+    void bind(BasicNode* val); //传进来的是求值后且已经拷贝完毕的实参，传进来即转移所有权（拷贝的过程由函数的eval完成）
+    void unbind();
+    bool isbind() {return (this->val!=nullptr);}
+    bool getOwnership() {return this->isownership;}
+};
 
 
 class ProNode : public BasicNode
@@ -86,6 +110,7 @@ public:
 
     //BasicNode* getHeadNode() {return this->sonNode.at(0);}
     BasicNode* getSen(int sub) {return this->sonNode.at(sub);}
+    void passEffect(vector<BasicNode*>sonNode);
 };
 
 
@@ -123,7 +148,7 @@ public:
     virtual BasicNode* eval();
     FunNode(Function* funEntity=nullptr):funEntity(funEntity){}
 
-    bool haveEntity() {return this->funEntity!=nullptr;}
+    bool haveEntity() {return this->fsunEntity!=nullptr;}
     void setEntity(Function* funEntity) {this->funEntity=funEntity;}
     ProNode* getFunBody() {return this->funEntity->getFunBody();}
 };

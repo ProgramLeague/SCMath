@@ -1,18 +1,31 @@
 #include "nodetype.h"
 
-bool isLiteral(BasicNode* node) //添加新的字面量要进行修改
+bool isLiteral(BasicNode* node) //是否为字面量，添加新的字面量要进行修改
 {
     return (node->getType()==Num||node->getType()==String);
 }
 
-BasicNode* copyLiteral(BasicNode* oriVal)
+bool isNotAssignable(BasicNode* node) //是否不可赋值给变量，支持新的值类型要进行修改
 {
-    //调用前应该调用isLiteral对参数进行检查
+    return (val->getType()==Pro||val->getType()==Fun);
+    //fix:目前暂不支持函数指针，因为函数实体的变量表示还没设计好
+}
+
+bool canCopy(BasicNode* node) //是否可以拷贝（作为值类型）
+{
+    return (isLiteral(node)||node->getType()==Var);
+}
+
+BasicNode* copyVal(BasicNode* oriVal) //（值类型）拷贝
+{
+    //调用前应该调用canCopy对参数进行检查
     if(oriVal->getType()==Num)
         return new NumNode(dynamic_cast<NumNode*>(oriVal));
     if(oriVal->getType()==String)
         return new StringNode(dynamic_cast<StringNode*>(oriVal));
-    //支持更多字面量类型后还需要在此处进行添加
+    if(oriVal->getType()==Var)
+        return new Variable(dynamic_cast<Variable*>(oriVal));
+    //支持更多具拷贝构造函数类型（尤其是字面量）后还需要在此处进行添加
     return nullptr; //如果进行参数检查了不会走到这一步
 }
 
@@ -25,6 +38,13 @@ BasicNode::~BasicNode()
     }
 }
 
+VarNode::VarNode(VarNode *node)
+{
+    //fix:此处不考虑拷贝Ret相关信息，如果Ret信息最后确定不删掉这里要加上
+    this->val=node->eval();
+    this->valtype=node->getValType();
+    this->isownership=node->getOwnership();
+}
 
 VarNode::~VarNode()
 {
@@ -35,10 +55,9 @@ VarNode::~VarNode()
 
 void VarNode::setVal(BasicNode* val)
 {
-    if(val->getType()==Pro||val->getType()==Fun)
+    if(isNotAssignable(val))
         throw string("Type of val cannot be used as value");
     //warn:理论上讲按照目前的设计，变量不应作为具有所有权的值（因为所有权在运行时域），但在此暂不进行检查。如果进行检查，直接在此处添加
-    //fix:目前暂不支持函数指针，因为函数实体的变量表示还没设计好（函数也应该只能进行无所有权的传递）
     this->valtype=val->getType();
     this->isownership=true;
     this->val=val;
@@ -46,7 +65,7 @@ void VarNode::setVal(BasicNode* val)
 
 void VarNode::setBorrowVal(BasicNode *val)
 {
-    if(val->getType()==Pro||val->getType()==Fun)
+    if(isNotAssignable(val))
         throw string("Type of val cannot be used as value");
     this->valtype=val->getType();
     this->isownership=false;
@@ -60,16 +79,16 @@ void VarNode::setVarVal(VarNode *node)
     BasicNode* oriVal=node->eval();
     //目前策略为：字面量进行拷贝（有所有权），变量作为无所有权指针传递
     if(isLiteral(oriVal))
-        this->setVal(copyLiteral(oriVal));
+        this->setVal(copyVal(oriVal));
     if(oriVal->getType()==Var)
         this->setBorrowVal(oriVal);
-    //支持函数之后还需要在此处进行添加
+    //fix:支持函数指针之后还需要在此处进行添加
 }
 
 BasicNode* VarNode::eval()
 {
     if(this->isEmpty())
-        return dynamic_cast<BasicNode*>(this);
+        throw string("Variable do not have values");
     else
         return this->val;
     //注意，多级指针也只会解包一次。不过从返回值基本无法判断返回的是自身还是自身的变量指针值，所以先前需要getValType进行判断
@@ -77,10 +96,60 @@ BasicNode* VarNode::eval()
 
 void VarNode::clearVal()
 {
-    //调用前应进行是否为空的检查
+    //调用前应进行是否为空的检查，否则有所有权的情况下会delete nullptr
     this->valtype=-1;
     if(this->isownership)
         delete this->val;
+}
+
+
+VarRefNode::~VarRefNode()
+{
+    if(this->getOwnership()&&this->isbind()) //一般来讲应该不会出现在绑定（函数调用期间）就释放实体的情况
+        delete this->val;
+}
+
+void VarRefNode::unbind()
+{
+    //调用前应进行是否为空的检查，否则有所有权的情况下会delete nullptr
+    this->valtype=-1;
+    if(this->getOwnership())
+        delete this->val;
+}
+
+BasicNode* VarRefNode::eval()
+{
+    if(!this->isbind())
+        throw string("VarRef unbind");
+    return this->val;
+}
+
+void VarRefNode::setVal(BasicNode* val)
+{
+    this->valtype=val->getType();
+    this->isownership=true;
+    this->val=val;
+}
+
+void VarRefNode::setBorrowVal(BasicNode *val)
+{
+    this->valtype=val->getType();
+    this->isownership=false;
+    this->val=val;
+}
+
+void VarRefNode::bind(BasicNode *val)
+{
+    if(val->isEmpty())
+        throw string("Variable do not have values");
+    if(isNotAssignable(val))
+        throw string("Type of val cannot be used as value");
+    //目前策略为：字面量进行拷贝（有所有权），变量作为无所有权指针传递
+    if(isLiteral(val))
+        this->setVal(copyVal(val));
+    if(val->getType()==Var)
+        this->setBorrowVal(val);
+    //fix:支持函数指针之后还需要在此处进行添加
 }
 
 

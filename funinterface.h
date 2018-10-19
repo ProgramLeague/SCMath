@@ -1,6 +1,5 @@
 #pragma once
 #include "nodetype.h"
-#include "scope.h" //包含这个，支持函数接口直接修改运行时域内的量（产生副作用）
 
 class BinOp
 {
