@@ -11,6 +11,16 @@ bool isNotAssignable(BasicNode* val) //是否不可赋值给变量，支持新�
     //fix:目前暂不支持函数指针，因为函数实体的变量表示还没设计好
 }
 
+
+BasicNode::~BasicNode()
+{
+    for(BasicNode* node:this->sonNode)
+    {
+        if(node->getType()!=Var) //这个随着域释放，不被连环析构
+            delete node;
+    }
+}
+
 BasicNode* copyVal(BasicNode* oriVal) //（值类型）拷贝
 {
     //调用前应该对参数类型进行检查
@@ -20,15 +30,6 @@ BasicNode* copyVal(BasicNode* oriVal) //（值类型）拷贝
         return new StringNode(dynamic_cast<StringNode*>(oriVal));
     //支持更多具拷贝构造函数类型（目前都是字面量）后还需要在此处进行添加
     return nullptr; //如果进行参数检查了不会走到这一步
-}
-
-BasicNode::~BasicNode()
-{
-    for(BasicNode* node:this->sonNode)
-    {
-        if(node->getType()!=Var) //这个随着域释放，不被连环析构
-            delete node;
-    }
 }
 
 
@@ -226,19 +227,32 @@ BasicNode* Function::eval(vector<BasicNode *> &sonNode)
         {
             recursionEval(funbody.at(i));
             if(funbody.at(i)->isRet())
+            {
+                this->unbindFormalPar();
                 return funbody.at(i);
+            }
         }
         //前面都不是返回值，最后一个是
         BasicNode* lastnode=funbody.at(funbody.size()-1);
         if(lastnode==nullptr)
+        {
+            this->unbindFormalPar();
             return nullptr;
+        }
         else
         {
             recursionEval(lastnode);
+            this->unbindFormalPar();
             return lastnode;
         }
-        this->unbindFormalPar();
     }
+}
+
+Function::~Function()
+{
+    delete this->pronode;
+    for(VarReference* i:this->formalParList)
+        delete i;
 }
 
 void Function::addFormalPar(VarReference *var)
