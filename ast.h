@@ -3,6 +3,7 @@
 #include<string>
 #include<cstdlib>
 #include<cmath>
+//#include<map>
 using namespace std;
 #include "nodetype.h"
 #include "scope.h"
@@ -17,5 +18,7 @@ namespace ast
 {
     void Init();
     BasicNode* ToAST(string);
-    bool canpush(stack<char> &, char);
+    bool canpush(stack<string> &, string);
+
+    extern map<string,int> BinOpPriority;
 }

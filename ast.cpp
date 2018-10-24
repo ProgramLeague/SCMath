@@ -2,8 +2,12 @@
 #include "funinterface.h"
 using namespace ast;
 
+Scope record::globalScope;
+map<string,int> ast::BinOpPriority;
+
 void ast::Init()
 {
+
     //初始化所有二元运算符函数实体
     Function* add=new Function(2,BinOp::isBinOp,BinOp::add);
     Function* sub=new Function(2,BinOp::isBinOp,BinOp::sub);
@@ -16,6 +20,13 @@ void ast::Init()
     record::globalScope.addFunction("/",div);
     //Function* entity=runtime::globalScope.functionList["+"]; //在parse阶段，可以这样从函数域中找到函数名对应的函数实体
     //FunNode* testNode=new FunNode(entity); //然后这样通过函数实体创建相应的函数节点
+    map<string,int> BinOpPriority;
+    BinOpPriority["$"] =0;
+    BinOpPriority["+"] =10;
+    BinOpPriority["-"] =10;
+    BinOpPriority["*"] =20;
+    BinOpPriority["/"] =20;
+    BinOpPriority["^"] =30;
 }
 
 bool isNum(const char &c) {
@@ -26,7 +37,7 @@ bool isBinOp(const char &c) {
     return c == '+' && c == '-' && c == '*' && c == '/' && c == '^';
 }
 
-bool ast::canpush(stack<char> &stackOp, char op) {
+bool ast::canpush(stack<string> &stackOp, string op) {
     if (stackOp.empty()) return true;
     return BinOpPriority[op] > BinOpPriority[stackOp.top()];
 }
@@ -34,7 +45,7 @@ bool ast::canpush(stack<char> &stackOp, char op) {
 BasicNode* ast::ToAST(string s) {
     s += '$';
     stack<BasicNode*> stackAST;
-    stack<char> stackOp;
+    stack<string> stackOp;
     int n = s.size();
     for (int i = 0; i < n; i++) {
         string temp;
@@ -42,63 +53,35 @@ BasicNode* ast::ToAST(string s) {
         if ((s[j] == '+' || s[j] == '-') && (j == 0 || isBinOp(s[j - 1]))) {
             temp += s[j];
         }//检查负号还是减号
-        while (j < n && isNum(s[j])) {
-            temp += s[j];
+        while (j < n && isNum(s[j]))
             j++;
-        }
         if (s[j] == '.' && j + 1 < n && s[j + 1] >= '0' && s[j + 1] <= '9') {
-            temp += s[j];
             j++;
             while (j < n && s[j] >= '0' && s[j] <= '9') {
-                temp += s[j];
                 j++;
             }
         }
+        temp += s.substr(i,j-i);
         i = j;
-        /*
-        while (i < n && s[i] >= '0' && s[i] <= '9') {
-            x = x * 10 + s[i] - '0';
-            i++;
-        }
-        if (s[i] == '.' && i + 1 < n && s[i + 1] >= '0' && s[i + 1] <= '9') {
-            i++;
-            while (i < n && s[i] >= '0' && s[i] <= '9') {
-                x = x * 10 + s[i] - '0';
-                x /= 10.0;
-                i++;
-            }
-        }
-        */
+
         stackAST.push(new NumNode(stod(temp)));
-        if (canpush(stackOp, s[i])) {
-            stackOp.push(s[i]);
+        if (canpush(stackOp, s.substr(i,1))) {
+            stackOp.push(s.substr(i,1));
         }
         else {
-            while (!canpush(stackOp, s[i])) {
+            while (!canpush(stackOp, s.substr(i,1))) {
                 BasicNode* a = stackAST.top();
                 stackAST.pop();
                 BasicNode* b = stackAST.top();
                 stackAST.pop();
-                char c = stackOp.top();
+                string c = stackOp.top();
                 stackOp.pop();
-                switch (c) {
-                case '+':
-                    stackAST.push(new BinOpNode('+',b,a));
-                    break;
-                case '-':
-                    stackAST.push(new BinOpNode('-', b, a));
-                    break;
-                case '*':
-                    stackAST.push(new BinOpNode('*', b, a));
-                    break;
-                case '/':
-                    stackAST.push(new BinOpNode('/', b, a));
-                    break;
-                case '^':
-                    stackAST.push(new BinOpNode('^', b, a));
-                }
+                FunNode* node = new FunNode(record::globalScope.functionList[c]);
+                node->addNode(b);
+                node->addNode(a);
+                stackAST.push(node);
             }
-            stackOp.push(s[i]);
+            stackOp.push(s.substr(i,1));
         }
     }
     return stackAST.top();
