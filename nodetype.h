@@ -31,7 +31,7 @@ protected:
     double num;
 public:
     virtual int getType() {return Num;}
-    virtual void addNode(BasicNode *node) {throw string("NumNode no sonNode");}
+    virtual void addNode(BasicNode *node) {throw string("NumNode have no sonNode");}
     virtual BasicNode* eval() {return dynamic_cast<BasicNode*>(this);}
     NumNode(double num) {this->num=num;}
     NumNode(NumNode* node):num(node->num){}
@@ -46,7 +46,7 @@ protected:
     string str;
 public:
     virtual int getType() {return String;}
-    virtual void addNode(BasicNode *node) {throw string("String no sonNode");}
+    virtual void addNode(BasicNode *node) {throw string("String have no sonNode");}
     virtual BasicNode* eval() {return dynamic_cast<BasicNode*>(this);}
     StringNode(string str) {this->str=str;}
     StringNode(StringNode* node):str(node->str){}
@@ -66,7 +66,7 @@ protected:
     void assignmentChecking(BasicNode* val);
 public:
     virtual int getType() {return Var;}
-    virtual void addNode(BasicNode* node) {throw string("VariableNode no sonNode");}
+    virtual void addNode(BasicNode* node) {throw string("VarNode have no sonNode");}
     virtual BasicNode* eval();
     virtual ~VarNode();
     VarNode(int valtype=-1);
@@ -96,7 +96,7 @@ protected:
     void setBorrowVal(BasicNode* val);
 public:
     virtual int getType() {return VarRef;}
-    virtual void addNode(BasicNode* node) {throw string("VarRefNode no sonNode");}
+    virtual void addNode(BasicNode* node) {throw string("VarRefNode have no sonNode");}
     virtual ~VarRefNode();
     virtual BasicNode* eval(); //eval结果是目前形参绑定到的实参
     VarRefNode(int valtype=-1);
