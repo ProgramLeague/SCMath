@@ -6,12 +6,13 @@ using namespace std;
 #define parserdebug
 
 enum nodeType{Num,String,Var,Pro,Fun,VarRef};
-
 class BasicNode //不可直接创建对象
 {
 protected:
     bool retFlag=false;
 public:
+
+
     virtual int getType()=0;
     virtual void addNode(BasicNode* node) {this->sonNode.push_back(node);} //使用该方法添加成员可查错
     virtual BasicNode* eval()=0;
@@ -169,4 +170,8 @@ public:
     bool haveEntity() {return this->funEntity!=nullptr;}
     void setEntity(Function* funEntity) {this->funEntity=funEntity;}
     ProNode* getFunBody() {return this->funEntity->getFunBody();}
+
+#ifdef parserdebug
+    Function* getFunc(){return this->funEntity;}
+#endif
 };

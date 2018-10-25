@@ -20,5 +20,9 @@ namespace ast
     BasicNode* ToAST(string);
     bool canpush(stack<string> &, string);
 
+    #ifdef parserdebug
+    void outputAST(BasicNode *);
+    #endif
+
     extern map<string,int> BinOpPriority;
 }

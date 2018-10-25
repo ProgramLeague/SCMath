@@ -1,5 +1,9 @@
 #include "ast.h"
 #include "funinterface.h"
+#ifdef parserdebug
+#include<iostream>
+#endif
+
 using namespace ast;
 
 Scope record::globalScope;
@@ -34,7 +38,11 @@ bool isNum(const char &c) {
 }
 
 bool isBinOp(const char &c) {
-    return c == '+' && c == '-' && c == '*' && c == '/' && c == '^';
+    return c == '+' || c == '-' || c == '*' || c == '/' || c == '^';
+}
+
+bool isBinOp(const string &c) {
+    return c == "+" || c == "-" || c == "*" || c == "/" || c == "^";
 }
 
 bool ast::canpush(stack<string> &stackOp, string op) {
@@ -86,3 +94,32 @@ BasicNode* ast::ToAST(string s) {
     }
     return stackAST.top();
 }
+
+#ifdef parserdebug
+void ast::outputAST(BasicNode* now){
+    if(now == nullptr)
+        return;
+    if(now->getType() == Num){
+        cout << ((NumNode*)now)->getNum() << ' ';
+        return;
+    }
+    if(now->getType() == Fun){
+        FunNode* t = (FunNode*)now;
+        Function* l = t->getFunc();
+        if(isBinOp(l->NAME)){
+            outputAST(t->sonNode[0]);
+            cout << l->NAME << ' ';
+            outputAST(t->sonNode[1]);
+            return;
+        }
+        cout << l->NAME << '(';
+        for(int i = 0 ; i < l->getParnum(); i++){
+            outputAST(t->sonNode[i]);
+            if(i != l->getParnum() - 1)
+                cout << ", ";
+        }
+        cout << ')';
+        return;
+    }
+}
+#endif
