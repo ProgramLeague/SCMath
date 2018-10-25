@@ -3,6 +3,7 @@
 #include <vector>
 #include <functional>
 using namespace std;
+#define parserdebug
 
 enum nodeType{Num,String,Var,Pro,Fun,VarRef};
 
@@ -79,6 +80,9 @@ public:
     void setBorrowVal(BasicNode* val); //直接对值进行赋值，用这个不转移所有权（一般赋值为变量指针用）
     void setVarVal(VarNode* node); //传递变量的值到this的值，即需要进行一次解包
     void clearVal();
+    #ifdef parserdebug
+    string NAME;
+    #endif
 };
 typedef VarNode Variable; //内存实体是Variable，其指针才作为节点（不像某些节点一样是遇到一个就new一次），参考函数实体和函数节点的思想
 
@@ -146,6 +150,9 @@ public:
     bool isVLP() {return this->VLP;}
     void addFormalPar(VarReference* var); //先在外面new好，然后转移所有权进来
     BasicNode* eval(vector<BasicNode *> &sonNode);
+    #ifdef parserdebug
+    string NAME;
+    #endif
 };
 
 
