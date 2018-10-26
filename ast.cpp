@@ -105,7 +105,7 @@ void ast::outputAST(BasicNode* now){
     }
     if(now->getType() == Fun){
         FunNode* t = (FunNode*)now;
-        Function* l = t->getFunc();
+        Function* l = t->getEntity();
         if(isBinOp(l->NAME)){
             outputAST(t->sonNode[0]);
             cout << l->NAME << ' ';
