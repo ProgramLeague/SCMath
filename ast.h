@@ -20,7 +20,7 @@ namespace ast
     BasicNode* ToAST(string);
     bool canpush(stack<string> &, string);
 
-    #ifdef parserdebug
+    #ifdef READABLEcodegeng
     void outputAST(BasicNode *);
     #endif
 

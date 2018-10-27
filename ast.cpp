@@ -1,6 +1,6 @@
 #include "ast.h"
 #include "funinterface.h"
-#ifdef parserdebug
+#ifdef READABLEcodegen
 #include<iostream>
 #endif
 
@@ -95,7 +95,7 @@ BasicNode* ast::ToAST(string s) {
     return stackAST.top();
 }
 
-#ifdef parserdebug
+#ifdef READABLEcodegen
 void ast::outputAST(BasicNode* now){
     if(now == nullptr)
         return;
