@@ -8,10 +8,12 @@ SOURCES += \
     main.cpp \
     nodetype.cpp \
     funinterface.cpp \
-    scope.cpp
+    scope.cpp \
+    output.cpp
 
 HEADERS += \
     ast.h \
     nodetype.h \
     scope.h \
-    funinterface.h
+    funinterface.h \
+    output.h

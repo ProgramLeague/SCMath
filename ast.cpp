@@ -1,8 +1,5 @@
 #include "ast.h"
 #include "funinterface.h"
-#ifdef READABLEcodegen
-#include<iostream>
-#endif
 
 using namespace ast;
 
@@ -33,15 +30,15 @@ void ast::Init()
     BinOpPriority["^"] =30;
 }
 
-bool isNum(const char &c) {
+bool ast::isNum(const char &c) {
     return c >= '0' && c <= '9';
 }
 
-bool isBinOp(const char &c) {
+bool ast::isBinOp(const char &c) {
     return c == '+' || c == '-' || c == '*' || c == '/' || c == '^';
 }
 
-bool isBinOp(const string &c) {
+bool ast::isBinOp(const string &c) {
     return c == "+" || c == "-" || c == "*" || c == "/" || c == "^";
 }
 
@@ -94,32 +91,3 @@ BasicNode* ast::ToAST(string s) {
     }
     return stackAST.top();
 }
-
-#ifdef READABLEcodegen
-void ast::outputAST(BasicNode* now){
-    if(now == nullptr)
-        return;
-    if(now->getType() == Num){
-        cout << ((NumNode*)now)->getNum() << ' ';
-        return;
-    }
-    if(now->getType() == Fun){
-        FunNode* t = (FunNode*)now;
-        Function* l = t->getEntity();
-        if(isBinOp(l->NAME)){
-            outputAST(t->sonNode[0]);
-            cout << l->NAME << ' ';
-            outputAST(t->sonNode[1]);
-            return;
-        }
-        cout << l->NAME << '(';
-        for(int i = 0 ; i < l->getParnum(); i++){
-            outputAST(t->sonNode[i]);
-            if(i != l->getParnum() - 1)
-                cout << ", ";
-        }
-        cout << ')';
-        return;
-    }
-}
-#endif
