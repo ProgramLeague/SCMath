@@ -21,7 +21,6 @@ void ast::Init()
     record::globalScope.addFunction("/",div);
     //Function* entity=runtime::globalScope.functionList["+"]; //在parse阶段，可以这样从函数域中找到函数名对应的函数实体
     //FunNode* testNode=new FunNode(entity); //然后这样通过函数实体创建相应的函数节点
-    map<string,int> BinOpPriority;
     BinOpPriority["$"] =0;
     BinOpPriority["+"] =10;
     BinOpPriority["-"] =10;
