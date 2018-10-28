@@ -1,11 +1,11 @@
-#pragma once
+﻿    #pragma once
 #include<stack>
 #include<string>
 #include<cstdlib>
 #include<cmath>
-using namespace std;
 #include "nodetype.h"
 #include "scope.h"
+using namespace std;
 
 class record
 {
@@ -18,10 +18,10 @@ namespace ast
     void Init();
     BasicNode* ToAST(string);
     bool canpush(stack<string> &, string);
-    //3A:这是为了把output移出来才放到头文件的，不知道对不对
-    bool isNum(const char &c);
-    bool isBinOp(const char &c);
-    bool isBinOp(const string &c);
-
+    //冷漠：好像没啥毛病
+    bool isNum(const char &);
+    bool isBinOp(const char &);
+    bool isBinOp(const string &);
+    bool isLetter(const char &);
     extern map<string,int> BinOpPriority;
 }

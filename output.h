@@ -4,5 +4,5 @@
 
 namespace output
 {
-    void outputAST(BasicNode* now);
+    void outputAST(BasicNode* ,int = 0);
 }

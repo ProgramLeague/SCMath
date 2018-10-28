@@ -1,31 +1,42 @@
 #include "funinterface.h"
+#include<cmath>
 
-bool BinOp::isBinOp(vector<BasicNode*>&sonNode)
+bool BuiltinFunc::hasOneSonNode(vector<BasicNode*> &sonNode)
 {
-    return (sonNode.at(0)->getType()==Num&&sonNode.at(1)->getType()==Num);
+    return sonNode.at(0)->getType() == Num;
 }
 
-double BinOp::getop(BasicNode *node)
+bool BuiltinFunc::hasTwoSonNodes(vector<BasicNode*> &sonNode)
+{
+    return sonNode.at(0)->getType() == Num && sonNode.at(1)->getType() == Num;
+}
+
+double BuiltinFunc::getNum(BasicNode *node)
 {
     return dynamic_cast<NumNode*>(node)->getNum();
 }
 
-BasicNode* BinOp::add(vector<BasicNode *> &sonNode)
+BasicNode* BuiltinFunc::add(vector<BasicNode *> &sonNode)
 {
-    return new NumNode(BinOp::getop(sonNode[0])+BinOp::getop(sonNode[1]));
+    return new NumNode(BuiltinFunc::getNum(sonNode[0]) + BuiltinFunc::getNum(sonNode[1]));
 }
 
-BasicNode* BinOp::sub(vector<BasicNode *> &sonNode)
+BasicNode* BuiltinFunc::sub(vector<BasicNode *> &sonNode)
 {
-    return new NumNode(BinOp::getop(sonNode[0])-BinOp::getop(sonNode[1]));
+    return new NumNode(BuiltinFunc::getNum(sonNode[0]) - BuiltinFunc::getNum(sonNode[1]));
 }
 
-BasicNode* BinOp::mul(vector<BasicNode *> &sonNode)
+BasicNode* BuiltinFunc::mul(vector<BasicNode *> &sonNode)
 {
-    return new NumNode(BinOp::getop(sonNode[0])*BinOp::getop(sonNode[1]));
+    return new NumNode(BuiltinFunc::getNum(sonNode[0]) * BuiltinFunc::getNum(sonNode[1]));
 }
 
-BasicNode* BinOp::div(vector<BasicNode *> &sonNode)
+BasicNode* BuiltinFunc::div(vector<BasicNode *> &sonNode)
 {
-    return new NumNode(BinOp::getop(sonNode[0])/BinOp::getop(sonNode[1]));
+    return new NumNode(BuiltinFunc::getNum(sonNode[0]) / BuiltinFunc::getNum(sonNode[1]));
+}
+
+BasicNode* BuiltinFunc::sin(vector<BasicNode *> &sonNode)
+{
+    return new NumNode(std::sin(BuiltinFunc::getNum(sonNode[0])));
 }
