@@ -97,13 +97,14 @@ BasicNode* ast::ToAST(string s)
             if(j < n && s[j] == '(')//函数
             {
                  FunNode* node = new FunNode(record::globalScope.functionList[s.substr(i, j - i)]);
-                 j++;//此时s[j] == '('
+                 //此时s[j] == '('
                  while(s[j] != ')' && s[j] != '$')
                  {
                      i = j;
+                     j++;
                     while(j < n && s[j] != ',' && s[j] != ')' && s[j] != '$')
                         j++;
-                    node->addNode(ToAST(s.substr(i, j - i )));
+                    node->addNode(ToAST(s.substr(i + 1, j - i - 1)));
                  }
                stackAST.push(node);
                i = j + 1;
