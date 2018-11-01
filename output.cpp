@@ -24,7 +24,7 @@ void output::outputAST(BasicNode* now, int fatherpriority)
             return;
         }
         cout << l->NAME << '(';
-        for(int i = 0 ; i < l->getParnum(); i++){
+        for(unsigned int i = 0 ; i < l->getParnum(); i++){
             outputAST(t->sonNode[i], 0);
             if(i != l->getParnum() - 1)
                 cout << ", ";

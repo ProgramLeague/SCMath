@@ -12,10 +12,7 @@ int main()
     BasicNode* ans = ast::ToAST(s);
     output::outputAST(ans);
     cout << endl;
-    try{
-        output::outputAST(ans ->eval());
-     }
-    catch(string ){};
+    output::outputAST(ans ->eval());
     cout << endl;
     output::outputAST(ans);
     return 0;
