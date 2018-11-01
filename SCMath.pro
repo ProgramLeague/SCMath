@@ -16,4 +16,6 @@ HEADERS += \
     nodetype.h \
     scope.h \
     funinterface.h \
-    output.h
+    output.h \
+    excep.h \
+    marco.h
