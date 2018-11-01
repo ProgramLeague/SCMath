@@ -179,19 +179,27 @@ void FunNode::addNode(BasicNode *node)
 
 BasicNode* FunNode::eval()
 {
+    #ifdef PARTEVAL
+    this->giveupEval=false;
+    #endif
+
     if(this->funEntity==nullptr)
         throw string("funEntity is null");
+
     #ifdef PARTEVAL
     try
     {
     #endif
-        return this->funEntity->eval(this->sonNode);
+    return this->funEntity->eval(this->sonNode);
     }
     #ifdef PARTEVAL
     catch(callCheckMismatchExcep e) //因为未赋值变量未求值使得参数类型不匹配，放弃对这个函数求值
     {
         if(e.getType()==TypeMisMatch)
+        {
+            this->giveupEval=true;
             return this;
+        }
         else
             throw e;
     }
@@ -214,13 +222,19 @@ void recursionEval(BasicNode* &node)
             try
             {
             #endif
-                result=node->eval();
+            result=node->eval();
             #ifdef PARTEVAL
             }
             catch(unassignedEvalExcep) //对未赋值变量求值，保持原样
             {result=node;}
             #endif
+
+            #ifdef PARTEVAL
             if(node->getType()!=Var)
+                if(!(node->getType()==Fun&&dynamic_cast<FunNode*>(node)->giveupEval)) //没有放弃求值
+            #else
+            if(node->getType()!=Var)
+            #endif
                 delete node;
             node=result; //节点的替换在这里（父节点）完成，子节点只需要返回即可
             //对于已经赋值的变量，整体过程是用值替代本身变量在AST中的位置，不过变量本身并没有被析构，因为变量的所有权在scope（后面可能还要访问）

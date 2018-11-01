@@ -169,4 +169,8 @@ public:
     void setEntity(Function* funEntity) {this->funEntity=funEntity;}
     Function* getEntity(){return this->funEntity;}
     ProNode* getFunBody() {return this->funEntity->getFunBody();}
+
+    #ifdef PARTEVAL
+    bool giveupEval; //如果里边有符号变量，暂时放弃对此节点（基本为函数节点）的求值，并在此做标记防止根函数节点被视为求值结束而delete
+    #endif
 };
