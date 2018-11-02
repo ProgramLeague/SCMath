@@ -1,13 +1,13 @@
 #include "nodetype.h"
 
-bool isLiteral(BasicNode* node) //是否为字面量，添加新的字面量要进行修改
+bool copyHelp::isLiteral(BasicNode* node) //warn:是否为字面量，添加新的字面量要进行修改
 {
     return (node->getType()==Num||node->getType()==String);
 }
 
-bool isNotAssignable(BasicNode* val) //是否不可赋值给变量，支持新的值类型要进行修改
+bool isNotAssignable(BasicNode* val) //warn:是否不可赋值给变量，支持新的值类型要进行修改
 {
-    return (val->getType()==Pro||val->getType()==Fun);
+    return (val->getType()==Pro||val->getType()==Fun||val->getType()==If||val->getType()==While);
     //fix:目前暂不支持函数指针，因为函数实体的变量表示还没设计好
 }
 
@@ -19,17 +19,6 @@ BasicNode::~BasicNode()
         if(node->getType()!=Var) //这个随着域释放，不被连环析构
             delete node;
     }
-}
-
-BasicNode* copyVal(BasicNode* oriVal) //（值类型）拷贝
-{
-    //调用前应该对参数类型进行检查
-    if(oriVal->getType()==Num)
-        return new NumNode(dynamic_cast<NumNode*>(oriVal));
-    if(oriVal->getType()==String)
-        return new StringNode(dynamic_cast<StringNode*>(oriVal));
-    //支持更多具拷贝构造函数类型（目前都是字面量）后还需要在此处进行添加
-    return nullptr; //如果进行参数检查了不会走到这一步
 }
 
 
@@ -78,8 +67,8 @@ void VarNode::setVarVal(VarNode *node)
         throw unassignedAssignedExcep();
     BasicNode* oriVal=node->eval();
     //目前策略为：字面量进行拷贝（有所有权），变量作为无所有权指针传递
-    if(isLiteral(oriVal))
-        this->setVal(copyVal(oriVal));
+    if(copyHelp::isLiteral(oriVal))
+        this->setVal(copyHelp::copyVal(oriVal));
     if(oriVal->getType()==Var)
         this->setBorrowVal(oriVal);
     //fix:支持函数指针之后还需要在此处进行添加
@@ -160,8 +149,8 @@ void VarRefNode::bind(BasicNode *val)
 {
     this->assignmentChecking(val);
     //目前策略为：字面量进行拷贝（有所有权），变量作为无所有权指针传递
-    if(isLiteral(val))
-        this->setVal(copyVal(val));
+    if(copyHelp::isLiteral(val))
+        this->setVal(copyHelp::copyVal(val));
     if(val->getType()==Var)
         this->setBorrowVal(val);
     //fix:支持函数指针之后还需要在此处进行添加
@@ -207,45 +196,47 @@ BasicNode* FunNode::eval()
     #endif
 }
 
+#ifdef PARTEVAL
+bool isNotGiveupEval(BasicNode* node)
+{
+    if(!(node->getType()==Fun&&dynamic_cast<FunNode*>(node)->giveupEval))
+    if(!(node->getType()==If&&dynamic_cast<IfNode*>(node)->giveupEval))
+    if(!(node->getType()==While&&dynamic_cast<WhileNode*>(node)->giveupEval))
+    //warn:支持新的控制流节点后要在此处添加
+        return true;
+    return false;
+}
+#endif
 
 void recursionEval(BasicNode* &node)
 {
-    if(node->getType()==Pro) //按正常求值树里面不要套Pro
-        throw string("ProNode cannot be function's sonNode");
+    if(copyHelp::isLiteral(node))
+        return; //如果是字面量，自己就是求值结果，下面再重新赋值一次就重复了
     else
     {
-        if(isLiteral(node))
-            return; //如果是字面量，自己就是求值结果，下面再重新赋值一次就重复了
-        else
+        BasicNode* result;
+        #ifdef PARTEVAL
+        try
         {
-            BasicNode* result;
-            #ifdef PARTEVAL
-            try
-            {
-            #endif
-            result=node->eval();
-            #ifdef PARTEVAL
-            }
-            catch(unassignedEvalExcep) //对未赋值变量求值，保持原样
-            {result=node;}
-            #endif
-
-            #ifdef PARTEVAL
-            if(node->getType()!=Var)
-                if(!(node->getType()==Fun&&dynamic_cast<FunNode*>(node)->giveupEval)) //对放弃求值的节点，不进行删除
-                //warn:支持控制流节点后，控制流节点放弃求值也不能在此处删除
-            #else
-            if(node->getType()!=Var)
-            #endif
-                delete node;
-            node=result; //节点的替换在这里（父节点）完成，子节点只需要返回即可
-            //对于已经赋值的变量，整体过程是用值替代本身变量在AST中的位置，不过变量本身并没有被析构，因为变量的所有权在scope（后面可能还要访问）
-            //对于未赋值的变量，求值结果是变量本身，AST没有变化
+        #endif
+        result=node->eval();
+        #ifdef PARTEVAL
         }
+        catch(unassignedEvalExcep) //对未赋值变量求值，保持原样
+        {result=node;}
+        #endif
+
+        if(node->getType()!=Var&&node->getType()!=VarRef)
+        #ifdef PARTEVAL
+            if(isNotGiveupEval(node)) //对放弃求值的节点，不进行删除
+        #endif
+            delete node;
+        node=result; //节点的替换在这里（父节点）完成，子节点只需要返回即可
+        //对于已经赋值的变量，整体过程是用值替代本身变量在AST中的位置，不过变量本身并没有被析构，因为变量的所有权在scope（后面可能还要访问）
     }
 }
 
-BasicNode* Function::eval(vector<BasicNode *> &sonNode)
+BasicNode* Function::eval(vector<BasicNode*> &sonNode)
 {
     //对所有参数求值
     for(BasicNode* &node:sonNode)
@@ -262,7 +253,9 @@ BasicNode* Function::eval(vector<BasicNode *> &sonNode)
     else //不能基础求值就是正常有函数体Pro的
     {
         this->bindArgument(sonNode); //子节点绑定到实参
-        BasicNode* result=this->pronode->eval();
+        ProNode* execpro=new ProNode(*this->body); //执行复制那个，防止函数体求值时被破坏
+        BasicNode* result=execpro->eval();
+        delete execpro;
         this->unbindArgument();
         return result;
     }
@@ -270,7 +263,7 @@ BasicNode* Function::eval(vector<BasicNode *> &sonNode)
 
 Function::~Function()
 {
-    delete this->pronode;
+    delete this->body;
     for(VarReference* i:this->argumentList)
         delete i;
 }
@@ -311,36 +304,115 @@ BasicNode* ProNode::eval()
     }
     //前面都不是返回值，最后一个是
     BasicNode* lastnode=body.at(body.size()-1);
-    if(lastnode==nullptr)
-        return nullptr;
-    else
-    {
+    if(lastnode->getType()!=Null)
         recursionEval(lastnode);
-        return lastnode;
-    }
+    return lastnode;
 }
 
 
-BasicNode* IfNode::eval()
+BasicNode* conditionalControlNode::evalCondition()
 {
     #ifdef PARTEVAL
     this->giveupEval=false;
     #endif
 
-    BasicNode* recon=this->condition->eval();
+    BasicNode* recon;
+    #ifdef PARTEVAL
+    try
+    {
+    #endif
+    recon=this->condition->eval();
+    #ifdef PARTEVAL
+    }
+    catch(unassignedEvalExcep) //condition直接就是个符号变量，放弃求值返回自身
+    {throw string("conditionalControlNode return");}
+    #endif
 
     #ifdef PARTEVAL
-    if(recon->getType()==Fun&&dynamic_cast<FunNode*>(recon)->giveupEval)
+    if(recon->getType()==Fun&&dynamic_cast<FunNode*>(recon)->giveupEval) //是一个函数里面有放弃求值的变量
     {
         this->giveupEval=true;
-        return this;
+        throw string("conditionalControlNode return");
+    }
+    #endif
+}
+
+BasicNode* IfNode::eval()
+{
+    BasicNode* recon;
+    #ifdef PARTEVAL
+    try
+    {
+    #endif
+    recon=this->evalCondition();
+    #ifdef PARTEVAL
+    }
+    catch(string e)
+    {
+        if(e=="conditionalControlNode return")
+            return this;
+        else
+            throw e;
     }
     #endif
 
     if(recon->getType()!=Num)
         throw string("IfNode condition value's type mismatch");
-    if(dynamic_cast<NumNode*>(recon)==0) //这里判断false
-        return this->falsePro->eval();
+    BasicNode* result;
+    if(dynamic_cast<NumNode*>(recon)->getNum()==0) //这里判断false
+        result=this->falsePro->eval();
     else
-        return this->truePro->eval();
+        result=this->truePro->eval();
+
+    delete recon;
+    return result;
+}
+
+IfNode::~IfNode()
+{
+    delete this->condition;
+    delete this->truePro;
+    delete this->falsePro;
+}
+
+BasicNode* WhileNode::eval()
+{
+    ProNode* execpro;
+    while(1)
+    {
+        BasicNode* recon;
+        #ifdef PARTEVAL
+        try
+        {
+        #endif
+            recon=this->evalCondition();
+        #ifdef PARTEVAL
+        }
+        catch(string e)
+        {
+            if(e=="conditionalControlNode return")
+                return this;
+            else
+                throw e;
+        }
+        #endif
+
+        if(recon->getType()!=Num)
+            throw string("WhileNode condition value's type mismatch");
+        if(dynamic_cast<NumNode*>(recon)->getNum()==1) //为真继续循环
+        {
+            execpro=new ProNode(*this->body);
+            execpro->eval();
+            delete execpro;
+        }
+        else
+            break;
+    }
+    return new nullNode();
+}
+
+WhileNode::~WhileNode()
+{
+    delete this->condition;
+    delete this->body;
 }

@@ -9,7 +9,8 @@ SOURCES += \
     nodetype.cpp \
     funinterface.cpp \
     scope.cpp \
-    output.cpp
+    output.cpp \
+    copynode.cpp
 
 HEADERS += \
     ast.h \
