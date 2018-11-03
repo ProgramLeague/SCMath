@@ -10,11 +10,11 @@ void ast::Init()
 {
 
     //初始化所有内置函数实体
-    Function* add = new Function(2, BuiltinFunc::hasTwoSonNodes, BuiltinFunc::add);
-    Function* sub = new Function(2, BuiltinFunc::hasTwoSonNodes, BuiltinFunc::sub);
-    Function* mul = new Function(2, BuiltinFunc::hasTwoSonNodes, BuiltinFunc::mul);
-    Function* div = new Function(2, BuiltinFunc::hasTwoSonNodes, BuiltinFunc::div);
-    Function* sin = new Function(1, BuiltinFunc::hasOneSonNode, BuiltinFunc::sin);
+    Function* add = new Function(BuiltinFunc::hasTwoSonNodes, BuiltinFunc::add,2);
+    Function* sub = new Function(BuiltinFunc::hasTwoSonNodes, BuiltinFunc::sub,2);
+    Function* mul = new Function(BuiltinFunc::hasTwoSonNodes, BuiltinFunc::mul,2);
+    Function* div = new Function(BuiltinFunc::hasTwoSonNodes, BuiltinFunc::div,2);
+    Function* sin = new Function(BuiltinFunc::hasOneSonNode, BuiltinFunc::sin,1);
     //将这些函数置入函数域
     record::globalScope.addFunction("+",add);
     record::globalScope.addFunction("-",sub);
