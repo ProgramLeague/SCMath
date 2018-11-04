@@ -36,6 +36,11 @@ BasicNode* BuiltinFunc::div(vector<BasicNode *> &sonNode)
     return new NumNode(BuiltinFunc::getNum(sonNode[0]) / BuiltinFunc::getNum(sonNode[1]));
 }
 
+BasicNode* BuiltinFunc::pow(vector<BasicNode *> &sonNode)
+{
+    return new NumNode(std::pow(BuiltinFunc::getNum(sonNode[0]), BuiltinFunc::getNum(sonNode[1])));
+}
+
 BasicNode* BuiltinFunc::sin(vector<BasicNode *> &sonNode)
 {
     return new NumNode(std::sin(BuiltinFunc::getNum(sonNode[0])));

@@ -2,6 +2,12 @@
 
 using namespace output;
 
+bool output::isBinOp(const string &c)
+{
+    return c == "+" || c == "-" || c == "*" || c == "/" || c == "^";
+}
+
+
 void output::outputAST(BasicNode* now, int fatherpriority)
 {
     if(now == nullptr)
@@ -13,7 +19,7 @@ void output::outputAST(BasicNode* now, int fatherpriority)
     if(now->getType() == Fun){
         FunNode* t = (FunNode*)now;
         Function* l = t->getEntity();
-        if(ast::isBinOp(l->NAME)){
+        if(output::isBinOp(l->NAME)){
             if(ast::BinOpPriority[l->NAME] < fatherpriority)
                 cout << '(';
             outputAST(t->sonNode[0], ast::BinOpPriority[l->NAME]);
@@ -24,15 +30,15 @@ void output::outputAST(BasicNode* now, int fatherpriority)
             return;
         }
         cout << l->NAME << '(';
-        for(unsigned int i = 0 ; i < l->getParnum(); i++){
+        for(int i = 0 ; i < l->getParnum(); i++){
             outputAST(t->sonNode[i], 0);
             if(i != l->getParnum() - 1)
-                cout << ", ";
+                cout << ",";
         }
         cout << ')';
         return;
     }
     if(now->getType() == Var){
-        cout << ((VarNode*)now)->NAME << ' ';
+        cout << ((VarNode*)now)->NAME;
     }
 }

@@ -15,13 +15,15 @@ public:
 
 namespace ast
 {
-    void Init();
-    BasicNode* ToAST(string);
-    bool canpush(stack<string> &, string);
-    //冷漠：好像没啥毛病
-    bool isNum(const char &);
-    bool isBinOp(const char &);
-    bool isBinOp(const string &);
-    bool isLetter(const char &);
+    extern bool isInit;
     extern map<string,int> BinOpPriority;
+
+    static void Init();
+    static bool canpush(stack<string> &, string);
+    static bool isNum(const char &);
+    static bool isBinOp(const char &);
+    static bool isLetter(const char &);
+    static BasicNode* __ToAST(string &);
+
+    BasicNode* ToAST(string);
 }

@@ -4,9 +4,10 @@
 using namespace ast;
 
 Scope record::globalScope;
+bool ast::isInit = false;
 map<string,int> ast::BinOpPriority;
 
-void ast::Init()
+static void ast::Init()
 {
 
     //初始化所有内置函数实体
@@ -14,12 +15,14 @@ void ast::Init()
     Function* sub = new Function(BuiltinFunc::hasTwoSonNodes, BuiltinFunc::sub,2);
     Function* mul = new Function(BuiltinFunc::hasTwoSonNodes, BuiltinFunc::mul,2);
     Function* div = new Function(BuiltinFunc::hasTwoSonNodes, BuiltinFunc::div,2);
+    Function* pow = new Function(BuiltinFunc::hasTwoSonNodes, BuiltinFunc::pow,2);
     Function* sin = new Function(BuiltinFunc::hasOneSonNode, BuiltinFunc::sin,1);
     //将这些函数置入函数域
     record::globalScope.addFunction("+",add);
     record::globalScope.addFunction("-",sub);
     record::globalScope.addFunction("*",mul);
     record::globalScope.addFunction("/",div);
+    record::globalScope.addFunction("^",pow);
     record::globalScope.addFunction("sin",sin);
     //Function* entity=runtime::globalScope.functionList["+"]; //在parse阶段，可以这样从函数域中找到函数名对应的函数实体
     //FunNode* testNode=new FunNode(entity); //然后这样通过函数实体创建相应的函数节点
@@ -41,11 +44,6 @@ bool ast::isBinOp(const char &c)
     return c == '+' || c == '-' || c == '*' || c == '/' || c == '^';
 }
 
-bool ast::isBinOp(const string &c)
-{
-    return c == "+" || c == "-" || c == "*" || c == "/" || c == "^";
-}
-
 bool ast::isLetter(const char &c)
 {
     return (c >= 'A' && c <='Z') || (c >= 'a' && c <= 'z');
@@ -57,7 +55,7 @@ bool ast::canpush(stack<string> &stackOp, string op)
     return BinOpPriority[op] > BinOpPriority[stackOp.top()];
 }
 
-BasicNode* ast::ToAST(string s)
+BasicNode* ast::__ToAST(string &s)
 {
     //冷漠：因为偷懒，没有略过输入的空格，输入带有空格会扔异常
     s += '$';
@@ -166,4 +164,18 @@ BasicNode* ast::ToAST(string s)
 
     }
     return stackAST.top();
+}
+
+BasicNode* ast::ToAST(string s){
+    if(!isInit){
+        Init();
+        isInit = true;
+    }
+    for(string::iterator c = s.begin(); c != s.end(); c++){
+        if(*c == '\x20' || * c == '\n' || *c == 't'){
+            s.erase(c);
+            c--;
+        }
+    }
+    return __ToAST(s);
 }
