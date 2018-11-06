@@ -52,6 +52,7 @@ void assignmentChecking(BasicNode *val,bool thisTypeRestrictFlag,int thisvaltype
 void VarNode::setVal(BasicNode* val)
 {
     assignmentChecking(val,this->typeRestrictFlag,this->getType());
+    this->clearVal();
     //warn:理论上讲按照目前的设计，变量不应作为具有所有权的值（因为所有权在运行时域），但在此暂不进行检查。如果进行检查，直接在此处添加
     this->valtype=val->getType();
     this->ownershipFlag=true;
@@ -61,6 +62,7 @@ void VarNode::setVal(BasicNode* val)
 void VarNode::setBorrowVal(BasicNode *val)
 {
     assignmentChecking(val,this->typeRestrictFlag,this->getType());
+    this->clearVal();
     this->valtype=val->getType();
     this->ownershipFlag=false;
     this->val=val;
@@ -70,6 +72,7 @@ void VarNode::setVarVal(VarNode *node)
 {
     if(node->isEmpty())
         throw unassignedAssignedExcep();
+    this->clearVal();
     BasicNode* oriVal=node->eval();
     //目前策略为：字面量进行拷贝（有所有权），变量作为无所有权指针传递
     if(copyHelp::isLiteral(oriVal))
@@ -431,21 +434,24 @@ ArrNode::ArrNode(int valtype, int len)
     this->len=len;
     if(valtype!=-1) //开启严格求值
         this->typeRestrictFlag=true;
-}
 
-void ArrNode::arrSizeCheck()
-{
-    if(!this->isVLA()) //限制参数个数
-        if(this->allelm.size()+1>this->len)
-            throw string("Array is too long");
+    //非定长数组会自动全部初始化
+    if(len!=-1)
+    {
+        for(unsigned int i=0;i<len;i++)
+            this->allelm.push_back(new VarNode(valtype));
+    }
 }
 
 VarNode* ArrNode::addElm(int valtype)
 {
-    this->arrSizeCheck();
+    if(!this->isVLA())
+        throw string("non-VLA Arr cannot add Elm");
     if(this->typeRestrictFlag)
+    {
         if(valtype!=this->valtype)
             throw string("Element type does not match array type");
+    }
 
     VarNode* node=new VarNode(valtype);
     this->allelm.push_back(node);
@@ -454,10 +460,13 @@ VarNode* ArrNode::addElm(int valtype)
 
 VarNode* ArrNode::addElm(VarNode *var)
 {
-    this->arrSizeCheck();
+    if(!this->isVLA())
+        throw string("non-VLA Arr cannot add Elm");
     if(this->typeRestrictFlag)
-        if(valtype!=var->getValType())
+    {
+        if(valtype!=this->valtype)
             throw string("Element type does not match array type");
+    }
 
     this->allelm.push_back(var);
     return var;
