@@ -10,7 +10,8 @@ SOURCES += \
     funinterface.cpp \
     scope.cpp \
     output.cpp \
-    copynode.cpp
+    copynode.cpp \
+    scmath.cpp
 
 HEADERS += \
     ast.h \
@@ -19,4 +20,5 @@ HEADERS += \
     funinterface.h \
     output.h \
     excep.h \
-    marco.h
+    marco.h \
+    scmath.h

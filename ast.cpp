@@ -57,7 +57,6 @@ bool ast::canpush(stack<string> &stackOp, string op)
 
 BasicNode* ast::__ToAST(string &s)
 {
-    //冷漠：因为偷懒，没有略过输入的空格，输入带有空格会扔异常
     s += '$';
     stack<BasicNode*> stackAST;
     stack<string> stackOp;
