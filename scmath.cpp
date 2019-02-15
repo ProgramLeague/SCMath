@@ -8,15 +8,13 @@ void Simplificate(BasicNode *&now){
         if(tempNow->sonNode[0]->getType() == Fun){
             FunNode* temp = (FunNode*)(tempNow->sonNode[0]);
             if(temp->getEntity()->NAME == "+" || temp->getEntity()->NAME == "-"){
-                FunNode* newls = new FunNode(tempNow->getEntity());
-                newls->addNode(copyHelp::copyNode(temp->sonNode[0]));
-                newls->addNode(copyHelp::copyNode(tempNow->sonNode[1]));
-                FunNode* newrs = new FunNode(tempNow->getEntity());
-                newrs->addNode(copyHelp::copyNode(temp->sonNode[1]));
-                newrs->addNode(copyHelp::copyNode(tempNow->sonNode[1]));
                 FunNode* newnow = new FunNode(temp->getEntity());
-                newnow->addNode(newls);
-                newnow->addNode(newrs);
+                for(int i = 0; i <= 1; i++){
+                    FunNode* newson = new FunNode(tempNow->getEntity());
+                    newson->addNode(copyHelp::copyNode(temp->sonNode[0]));
+                    newson->addNode(copyHelp::copyNode(tempNow->sonNode[1]));
+                    newnow->addNode(newson);
+                }
                 delete now;
                 now = newnow;
                 tempNow = (FunNode*)now;
@@ -27,20 +25,19 @@ void Simplificate(BasicNode *&now){
         if(tempNow->sonNode[1]->getType() == Fun){
             FunNode* temp = (FunNode*)(tempNow->sonNode[1]);
             if(temp->getEntity()->NAME == "+" || temp->getEntity()->NAME == "-"){
-                FunNode* newls = new FunNode(tempNow->getEntity());
-                newls->addNode(copyHelp::copyNode(tempNow->sonNode[0]));
-                newls->addNode(copyHelp::copyNode(temp->sonNode[0]));
-                FunNode* newrs = new FunNode(tempNow->getEntity());
-                newrs->addNode(copyHelp::copyNode(tempNow->sonNode[0]));
-                newrs->addNode(copyHelp::copyNode(temp->sonNode[1]));
                 FunNode* newnow = new FunNode(temp->getEntity());
-                newnow->addNode(newls);
-                newnow->addNode(newrs);
+                for(int i = 0; i <= 1; i++){
+                    FunNode* newson = new FunNode(tempNow->getEntity());
+                    newson->addNode(copyHelp::copyNode(tempNow->sonNode[0]));
+                    newson->addNode(copyHelp::copyNode(temp->sonNode[0]));
+                    newnow->addNode(newson);
+                }
                 delete now;
                 now = newnow;
+                tempNow = (FunNode*)now;
             }
          }
     }
-    Simplificate(now->sonNode[0]);
-    Simplificate(now->sonNode[1]);
+    for(int i = 0; i < tempNow->getEntity()->getParnum(); i++)
+        Simplificate(now->sonNode[i]);
 }
