@@ -44,7 +44,7 @@ void output::outputAST(BasicNode* now, const string& FatherOP)
         int n = t->getEntity()->getParnum();
         for(int i = 0 ; i < n; i++)
         {
-            outputAST(t->sonNode[i], 0);
+            outputAST(t->sonNode[i], string(ast::LowestPriority, 1));
             if(i != n - 1)
                 cout << ",";
         }

@@ -2,7 +2,7 @@
 
 void Simplificate(BasicNode *&now)
 {
-      if(now->getType() != Fun)
+        if(now->getType() != Fun)
         return;
     FunNode* tempNow = (FunNode*)now;
 
@@ -166,6 +166,33 @@ BasicNode* Derivation(BasicNode* now, const string &value){
             retnson->addNode(new NumNode(2));
             retn->addNode(retnson);//分母部分
             return retn;
+        }
+
+        if(op == "^")//幂，使用公式 (f^g)' == (f ^ g) * (g' * ln f + g * f' / f)
+         {
+             FunNode* retn = new FunNode(record::globalScope.functionList["*"]);
+             FunNode* retnson = new FunNode(temp->getEntity());
+             FunNode* retnsonson, *retnsonsonson;
+             retnson->addNode(copyHelp::copyNode(temp->sonNode[0]));
+             retnson->addNode(copyHelp::copyNode(temp->sonNode[1]));
+             retn->addNode(retnson);//(f^g) * 部分
+             retnson = new FunNode(record::globalScope.functionList["+"]);
+             retnsonson = new FunNode(record::globalScope.functionList["*"]);
+             retnsonson->addNode(Derivation(temp->sonNode[1], value));
+             retnsonsonson = new FunNode(record::globalScope.functionList["log"]);
+             retnsonsonson->addNode(new NumNode(std::exp(1)));
+             retnsonsonson->addNode(copyHelp::copyNode(temp->sonNode[0]));
+             retnsonson->addNode(retnsonsonson);
+             retnson->addNode(retnsonson);//(g' * ln f + 部分
+             retnsonson = new FunNode(record::globalScope.functionList["*"]);
+             retnsonsonson = new FunNode(record::globalScope.functionList["/"]);
+             retnsonsonson->addNode(Derivation(temp->sonNode[0], value));
+             retnsonsonson->addNode(copyHelp::copyNode(temp->sonNode[0]));
+             retnsonson->addNode(copyHelp::copyNode(temp->sonNode[1]));
+             retnsonson->addNode(retnsonsonson);
+             retnson->addNode(retnsonson);//g * f' / f) 部分
+             retn->addNode(retnson);
+             return retn;
         }
     }
     //warn:其它函数还没有写

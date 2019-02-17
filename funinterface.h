@@ -17,4 +17,5 @@ public:
     static BasicNode* div(vector<BasicNode*>&sonNode);
     static BasicNode* pow(vector<BasicNode*>&sonNode);
     static BasicNode* sin(vector<BasicNode*>&sonNode);
+    static BasicNode* log(vector<BasicNode*>&sonNode);
 };

@@ -31,7 +31,7 @@ int main()
     cout << endl << endl;
     delete ansTestSimplificate;
 
-    string TestDerivation = "a+b-c*d/e";
+    string TestDerivation = "a+b-c*d/e+f^g";
     BasicNode* ansTestDerivation = ast::ToAST(TestDerivation);
     BasicNode* ansAfterDerivation;
     output::outputAST(ansTestDerivation);
@@ -47,6 +47,16 @@ int main()
     cout << endl;
     delete ansAfterDerivation;
     ansAfterDerivation = Derivation(ansTestDerivation, "e");
+    Simplificate(ansAfterDerivation);
+    output::outputAST(ansAfterDerivation);
+    cout << endl;
+    delete ansAfterDerivation;
+    ansAfterDerivation = Derivation(ansTestDerivation, "f");
+    Simplificate(ansAfterDerivation);
+    output::outputAST(ansAfterDerivation);
+    cout << endl;
+    delete ansAfterDerivation;
+    ansAfterDerivation = Derivation(ansTestDerivation, "g");
     Simplificate(ansAfterDerivation);
     output::outputAST(ansAfterDerivation);
     cout << endl;
