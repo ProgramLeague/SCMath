@@ -9,7 +9,6 @@ map<string,int> ast::BinOpPriority;
 
 static void ast::Init()
 {
-
     //初始化所有内置函数实体
     Function* add = new Function(BuiltinFunc::hasTwoSonNodes, BuiltinFunc::add,2);
     Function* sub = new Function(BuiltinFunc::hasTwoSonNodes, BuiltinFunc::sub,2);
@@ -49,7 +48,7 @@ bool ast::isLetter(const char &c)
     return (c >= 'A' && c <='Z') || (c >= 'a' && c <= 'z');
 }
 
-bool ast::canpush(stack<string> &stackOp, string op)
+bool ast::canpush(stack<string> &stackOp, const string& op)
 {
     if (stackOp.empty()) return true;
     return BinOpPriority[op] > BinOpPriority[stackOp.top()];
@@ -69,7 +68,7 @@ BasicNode* ast::__ToAST(string &s)
 
         if ((s[j] == '+' || s[j] == '-') && (j == 0 || isBinOp(s[j - 1])))
        {
-            temp += s[j];
+            j++;
         }//检查负号还是减号
         if(j < n && isNum(s[j]))
         {
@@ -95,11 +94,11 @@ BasicNode* ast::__ToAST(string &s)
             {
                  FunNode* node = new FunNode(record::globalScope.functionList[s.substr(i, j - i)]);
                  //此时s[j] == '('
-                 while(s[j] != ')' && s[j] != '$')
+                 while(s[j] != ')' && s[j] != LowestPriority)
                  {
                      i = j;
                      j++;
-                    while(j < n && s[j] != ',' && s[j] != ')' && s[j] != '$')
+                    while(j < n && s[j] != ',' && s[j] != ')' && s[j] != LowestPriority)
                         j++;
                     node->addNode(ToAST(s.substr(i + 1, j - i - 1)));
                  }
@@ -133,7 +132,7 @@ BasicNode* ast::__ToAST(string &s)
         }
 
 
-        if(i < n && (isBinOp(s[i]) || s[i] == '$'))//按理说，一个数字/变量/函数结束之后是一个运算符/字符串结尾
+        if(i < n && (isBinOp(s[i]) || s[i] == LowestPriority))//按理说，一个数字/变量/函数结束之后是一个运算符/字符串结尾
         {
           if (canpush(stackOp, s.substr(i,1)))
           {

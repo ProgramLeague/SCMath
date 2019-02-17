@@ -15,11 +15,12 @@ public:
 
 namespace ast
 {
+    static const char LowestPriority = '$';
     extern bool isInit;
     extern map<string,int> BinOpPriority;
 
     static void Init();
-    static bool canpush(stack<string> &, string);
+    static bool canpush(stack<string> &, const string &);
     static bool isNum(const char &);
     static bool isBinOp(const char &);
     static bool isLetter(const char &);
