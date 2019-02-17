@@ -1,4 +1,5 @@
 #include "nodetype.h"
+#include "ast.h"
 
 bool copyHelp::isLiteral(int type) //warn:是否为字面量，添加新的字面量要进行修改
 {
@@ -24,6 +25,47 @@ BasicNode::~BasicNode()
         if(node->getType()!=Var) //这个随着域释放，不被连环析构
             delete node;
     }
+}
+
+
+BasicNode* BasicNode::operator +(BasicNode& rhs)
+{
+    BasicNode* retn = new FunNode(record::globalScope.functionList["+"]);
+    retn->addNode(copyHelp::copyNode(this));
+    retn->addNode(copyHelp::copyNode(&rhs));
+    return retn;
+}
+
+BasicNode* BasicNode::operator -(BasicNode& rhs)
+{
+    BasicNode* retn = new FunNode(record::globalScope.functionList["-"]);
+    retn->addNode(copyHelp::copyNode(this));
+    retn->addNode(copyHelp::copyNode(&rhs));
+    return retn;
+}
+
+BasicNode* BasicNode::operator *(BasicNode& rhs)
+{
+    BasicNode* retn = new FunNode(record::globalScope.functionList["*"]);
+    retn->addNode(copyHelp::copyNode(this));
+    retn->addNode(copyHelp::copyNode(&rhs));
+    return retn;
+}
+
+BasicNode* BasicNode::operator /(BasicNode& rhs)
+{
+    BasicNode* retn = new FunNode(record::globalScope.functionList["/"]);
+    retn->addNode(copyHelp::copyNode(this));
+    retn->addNode(copyHelp::copyNode(&rhs));
+    return retn;
+}
+
+BasicNode* BasicNode::operator ^(BasicNode& rhs)
+{
+    BasicNode* retn = new FunNode(record::globalScope.functionList["^"]);
+    retn->addNode(copyHelp::copyNode(this));
+    retn->addNode(copyHelp::copyNode(&rhs));
+    return retn;
 }
 
 

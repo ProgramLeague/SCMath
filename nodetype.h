@@ -4,6 +4,7 @@
 #include <functional>
 #include "marco.h"
 #include "excep.h"
+#define D(x) *(x)
 using namespace std;
 
 class BasicNode
@@ -22,6 +23,13 @@ public:
     void setRet() {this->retFlag=true;} //不可eval节点设置ret无效
     bool isRet() const {return this->retFlag;}
     vector<BasicNode*> sonNode;
+
+    BasicNode* operator +(BasicNode&);
+    BasicNode* operator -(BasicNode&);
+    BasicNode* operator *(BasicNode&);
+    BasicNode* operator /(BasicNode&);
+    BasicNode* operator ^(BasicNode&);
+
 };
 typedef function<bool(vector<BasicNode*>&sonNode)>canBE; //检测函数基础求值参数表是否合法
 typedef function<BasicNode*(vector<BasicNode*>&sonNode)>BE; //进行基础求值

@@ -71,5 +71,14 @@ int main()
     Simplificate(ansAfterDerivation);
     output::outputAST(ansAfterDerivation);
     cout << endl << endl;
+
+    TestDerivation = "log(2.7182818,cos(x))";
+    ansTestDerivation = ast::ToAST(TestDerivation);
+    output::outputAST(ansTestDerivation);
+    cout << endl;
+    ansAfterDerivation = Derivation(ansTestDerivation, "x");
+    Simplificate(ansAfterDerivation);
+    output::outputAST(ansAfterDerivation);
+    cout << endl << endl;
     return 0;
 }

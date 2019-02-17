@@ -80,7 +80,7 @@ BasicNode* ast::__ToAST(string &s)
                 j++;//整数部分
             if (s[j] == '.' && j + 1 < n && isNum(s[j + 1])) {
                 j++;//小数部分
-                while (j < n && isNum(s[j + 1]))
+                while (j < n && isNum(s[j]))
                 {
                     j++;
                 }
@@ -100,10 +100,17 @@ BasicNode* ast::__ToAST(string &s)
                 //此时s[j] == '('
                 while(s[j] != ')' && s[j] != LowestPriority)
                 {
+                    int countleftParenthesis = 1;
                     i = j;
                     j++;
-                    while(j < n && s[j] != ',' && s[j] != ')' && s[j] != LowestPriority)
+                    while(j < n && s[j] != ',' && s[j] != LowestPriority && countleftParenthesis != 0)
+                    {
                         j++;
+                        if(s[j] == '(')
+                            countleftParenthesis++;
+                        if(s[j] == ')')
+                            countleftParenthesis--;
+                    }
                     node->addNode(ToAST(s.substr(i + 1, j - i - 1)));
                 }
                 stackAST.push(node);

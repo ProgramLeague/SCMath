@@ -151,80 +151,72 @@ BasicNode* Derivation(BasicNode* now, const string &value){
         if(op == "/")//除法:f / g == (f' * g - g' * f) / g ^ 2
         {
             BasicNode *f = temp->sonNode[0], *g = temp->sonNode[1];
-            FunNode* retn = new FunNode(temp->getEntity());
-            FunNode* retnson = new FunNode(record::globalScope.functionList["-"]);
-            FunNode* retnsonson = new FunNode(record::globalScope.functionList["*"]);//忽略这个粗糙的变量名称
-            retnsonson->addNode(Derivation(f, value));
-            retnsonson->addNode(copyHelp::copyNode(g));
-            retnson->addNode(retnsonson);//(f' * g - 部分
-            retnsonson = new FunNode(record::globalScope.functionList["*"]);
-            retnsonson->addNode(Derivation(g, value));
-            retnsonson->addNode(copyHelp::copyNode(f));
-            retnson->addNode(retnsonson);//g' * f) 部分
-            retn->addNode(retnson);//返回的树的分子部分
-            retnson = new FunNode(record::globalScope.functionList["^"]);
-            retnson->addNode(copyHelp::copyNode(g));
-            retnson->addNode(new NumNode(2));
-            retn->addNode(retnson);//分母部分
+            BasicNode *df = Derivation(f, value), *dg = Derivation(g, value);
+            BasicNode* num2 = new NumNode(2);
+            BasicNode* retn = D(D(D(df) * D(g)) - D(D(dg) * D(f))) / D(D(g) ^ D(num2));//^的优先级比较低，要加括号
+            delete df;
+            delete dg;
             return retn;
         }
 
         if(op == "^")//幂:(f^g)' == (f ^ g) * (g' * ln f + g * f' / f)
         {
             BasicNode *f = temp->sonNode[0], *g = temp->sonNode[1];
-            FunNode* retn = new FunNode(record::globalScope.functionList["*"]);
-            FunNode* retnson = new FunNode(temp->getEntity());
-            FunNode* retnsonson, *retnsonsonson;
-            retnson->addNode(copyHelp::copyNode(f));
-            retnson->addNode(copyHelp::copyNode(g));
-            retn->addNode(retnson);//(f^g) * 部分
-            retnson = new FunNode(record::globalScope.functionList["+"]);
-            retnsonson = new FunNode(record::globalScope.functionList["*"]);
-            retnsonson->addNode(Derivation(g, value));
-            retnsonsonson = new FunNode(record::globalScope.functionList["log"]);
-            retnsonsonson->addNode(new NumNode(std::exp(1)));
-            retnsonsonson->addNode(copyHelp::copyNode(f));
-            retnsonson->addNode(retnsonsonson);
-            retnson->addNode(retnsonson);//(g' * ln f + 部分
-            retnsonson = new FunNode(record::globalScope.functionList["*"]);
-            retnsonsonson = new FunNode(record::globalScope.functionList["/"]);
-            retnsonsonson->addNode(Derivation(f, value));
-            retnsonsonson->addNode(copyHelp::copyNode(f));
-            retnsonson->addNode(copyHelp::copyNode(g));
-            retnsonson->addNode(retnsonsonson);
-            retnson->addNode(retnsonson);//g * f' / f) 部分
-            retn->addNode(retnson);
+            BasicNode *df = Derivation(f, value), *dg = Derivation(g, value);
+            BasicNode* lnf = new FunNode(record::globalScope.functionList["log"]);
+            lnf->addNode(new NumNode(std::exp(1)));
+            lnf->addNode(copyHelp::copyNode(f));
+            BasicNode* retn = D(D(f) ^ D(g)) * D(D(D(dg) * D(lnf)) + D(D(D(g) * D(df)) / D(f)));
+            delete df;
+            delete dg;
+            delete lnf;
             return retn;
         }
 
         if(op == "sin")//正弦函数:(sin(f))' == f' * cos(f)
         {
-            BasicNode* f = temp->sonNode[0];
-            FunNode* retn = new FunNode(record::globalScope.functionList["*"]);
-            FunNode* retnson = new FunNode(record::globalScope.functionList["cos"]);
-            retnson->addNode(copyHelp::copyNode(f));//cos(f)部分
-            retn->addNode(Derivation(f, value));
-            retn->addNode(retnson);
+            BasicNode *f = temp->sonNode[0];
+            BasicNode *df = Derivation(f, value);
+            BasicNode* cosf = new FunNode(record::globalScope.functionList["cos"]);
+            cosf->addNode(copyHelp::copyNode(f));
+            BasicNode* retn = D(df) * D(cosf);
+            delete df;
+            delete cosf;
             return retn;
         }
 
         if(op == "cos")//余弦函数:(cos(f))' == -1 * f' * sin(f)
         {
-            BasicNode* f = temp->sonNode[0];
-            FunNode* retn = new FunNode(record::globalScope.functionList["*"]);
-            FunNode* retnson = new FunNode(record::globalScope.functionList["*"]);
-            FunNode* retnsonson = new FunNode(record::globalScope.functionList["sin"]);
-            retnsonson->addNode(copyHelp::copyNode(f));//sin(f)部分
-            retnson->addNode(Derivation(f, value));
-            retnson->addNode(retnsonson);//f' * sin(f)部分
-            retn->addNode(new NumNode(-1));
-            retn->addNode(retnson);
+            BasicNode *f = temp->sonNode[0];
+            BasicNode *df = Derivation(f, value);
+            BasicNode *numNeg1 = new NumNode(-1);
+            BasicNode* sinf = new FunNode(record::globalScope.functionList["sin"]);
+            sinf->addNode(copyHelp::copyNode(f));
+            BasicNode* retn = D(numNeg1) * D(D(df) * D(sinf));
+            delete df;
+            delete numNeg1;
+            delete sinf;
             return retn;
         }
 
-        if(op == "log")//对数函数:(log(f, g))' = g' / (g * log(e, f) - f' * log(e, g) / (f * log(e, f) ^ 2)
+        if(op == "log")//对数函数:(log(f, g))' = g' / (g * log(e, f)) - f' * log(e, g) / (f * log(e, f) ^ 2)
         {
-            //咕咕咕
+            BasicNode *f = temp->sonNode[0], *g = temp->sonNode[1];
+            BasicNode *df = Derivation(f, value), *dg = Derivation(g, value);
+            BasicNode* lnf = new FunNode(record::globalScope.functionList["log"]);
+            lnf->addNode(new NumNode(std::exp(1)));
+            lnf->addNode(copyHelp::copyNode(f));
+            BasicNode* lng = new FunNode(record::globalScope.functionList["log"]);
+            lng->addNode(new NumNode(std::exp(1)));
+            lng->addNode(copyHelp::copyNode(g));
+            BasicNode* num2 = new NumNode(2);
+            BasicNode* retn = D(D(dg) / D(D(g) * D(lnf))) - D(D(df) * D(D(lng) / D(D(f) * D(D(lnf) ^ D(num2)))));
+            delete df;
+            delete dg;
+            delete lnf;
+            delete lng;
+            delete num2;
+            return retn;
         }
     }
 
