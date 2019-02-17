@@ -168,22 +168,22 @@ void FunNode::addNode(BasicNode *node)
 
 BasicNode* FunNode::eval()
 {
-    #ifdef PARTEVAL
+#ifdef PARTEVAL
     this->giveupEval=false;
-    #endif
+#endif
 
     if(this->funEntity==nullptr)
         throw string("funEntity is null");
 
-    #ifdef PARTEVAL
+#ifdef PARTEVAL
     try
     {
-    #endif
-    return this->funEntity->eval(this->sonNode);
+#endif
+        return this->funEntity->eval(this->sonNode);
     }
-    #ifdef PARTEVAL
+#ifdef PARTEVAL
     catch(callCheckMismatchExcep e) //因为未赋值变量未求值使得参数类型不匹配，放弃对这个函数求值
-    //控制流节点对条件的求值会在此处进行，该节点放弃求值会被上层控制流节点检查到，控制流节点也会放弃求值
+            //控制流节点对条件的求值会在此处进行，该节点放弃求值会被上层控制流节点检查到，控制流节点也会放弃求值
     {
         if(e.getType()==TypeMisMatch)
         {
@@ -193,17 +193,17 @@ BasicNode* FunNode::eval()
         else
             throw e;
     }
-    #endif
+#endif
 }
 
 #ifdef PARTEVAL
 bool isNotGiveupEval(BasicNode* node)
 {
     if(!(node->getType()==Fun&&dynamic_cast<FunNode*>(node)->giveupEval))
-    if(!(node->getType()==If&&dynamic_cast<IfNode*>(node)->giveupEval))
-    if(!(node->getType()==While&&dynamic_cast<WhileNode*>(node)->giveupEval))
-    //warn:支持新的控制流节点后要在此处添加
-        return true;
+        if(!(node->getType()==If&&dynamic_cast<IfNode*>(node)->giveupEval))
+            if(!(node->getType()==While&&dynamic_cast<WhileNode*>(node)->giveupEval))
+                //warn:支持新的控制流节点后要在此处添加
+                return true;
     return false;
 }
 #endif
@@ -215,22 +215,22 @@ void recursionEval(BasicNode* &node)
     else
     {
         BasicNode* result;
-        #ifdef PARTEVAL
+#ifdef PARTEVAL
         try
         {
-        #endif
-        result=node->eval();
-        #ifdef PARTEVAL
+#endif
+            result=node->eval();
+#ifdef PARTEVAL
         }
         catch(unassignedEvalExcep) //对未赋值变量求值，保持原样
         {result=node;}
-        #endif
+#endif
 
         if(node->getType()!=Var&&node->getType()!=VarRef)
-        #ifdef PARTEVAL
+#ifdef PARTEVAL
             if(isNotGiveupEval(node)) //对放弃求值的节点，不进行删除
-        #endif
-            delete node;
+#endif
+                delete node;
         node=result; //节点的替换在这里（父节点）完成，子节点只需要返回即可
         //对于已经赋值的变量，整体过程是用值替代本身变量在AST中的位置，不过变量本身并没有被析构，因为变量的所有权在scope（后面可能还要访问）
     }
@@ -313,29 +313,29 @@ BasicNode* ProNode::eval()
 
 BasicNode* conditionalControlNode::evalCondition()
 {
-    #ifdef PARTEVAL
+#ifdef PARTEVAL
     this->giveupEval=false;
-    #endif
+#endif
 
     BasicNode* recon;
-    #ifdef PARTEVAL
+#ifdef PARTEVAL
     try
     {
-    #endif
-    recon=this->condition->eval();
-    #ifdef PARTEVAL
+#endif
+        recon=this->condition->eval();
+#ifdef PARTEVAL
     }
     catch(unassignedEvalExcep) //condition直接就是个符号变量，放弃求值返回自身
     {throw string("conditionalControlNode return");}
-    #endif
+#endif
 
-    #ifdef PARTEVAL
+#ifdef PARTEVAL
     if(recon->getType()==Fun&&dynamic_cast<FunNode*>(recon)->giveupEval) //是一个函数里面有放弃求值的变量
     {
         this->giveupEval=true; //本控制流节点也放弃求值
         throw string("conditionalControlNode return");
     }
-    #endif
+#endif
 
     return recon;
 }
@@ -343,12 +343,12 @@ BasicNode* conditionalControlNode::evalCondition()
 BasicNode* IfNode::eval()
 {
     BasicNode* recon;
-    #ifdef PARTEVAL
+#ifdef PARTEVAL
     try
     {
-    #endif
-    recon=this->evalCondition();
-    #ifdef PARTEVAL
+#endif
+        recon=this->evalCondition();
+#ifdef PARTEVAL
     }
     catch(string e)
     {
@@ -357,7 +357,7 @@ BasicNode* IfNode::eval()
         else
             throw e;
     }
-    #endif
+#endif
 
     if(recon->getType()!=Num)
         throw string("IfNode condition value's type mismatch");
@@ -384,12 +384,12 @@ BasicNode* WhileNode::eval()
     while(1)
     {
         BasicNode* recon;
-        #ifdef PARTEVAL
+#ifdef PARTEVAL
         try
         {
-        #endif
+#endif
             recon=this->evalCondition();
-        #ifdef PARTEVAL
+#ifdef PARTEVAL
         }
         catch(string e)
         {
@@ -398,7 +398,7 @@ BasicNode* WhileNode::eval()
             else
                 throw e;
         }
-        #endif
+#endif
 
         if(recon->getType()!=Num)
             throw string("WhileNode condition value's type mismatch");
@@ -425,7 +425,7 @@ void ArrNode::clearArray()
 {
     //ArrayNode所有权由域持有，内含变量所有权由类本身持有，因此所有elm全部释放
     for(BasicNode* node:this->allelm)
-       delete node;
+        delete node;
 }
 
 ArrNode::ArrNode(int valtype, int len)

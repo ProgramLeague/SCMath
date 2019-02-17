@@ -31,7 +31,7 @@ int main()
     cout << endl << endl;
     delete ansTestSimplificate;
 
-    string TestDerivation = "a+b-c*d/e+f^g";
+    string TestDerivation = "a+b-c*d/e+f^g-2^a";
     BasicNode* ansTestDerivation = ast::ToAST(TestDerivation);
     BasicNode* ansAfterDerivation;
     output::outputAST(ansTestDerivation);
@@ -59,8 +59,17 @@ int main()
     ansAfterDerivation = Derivation(ansTestDerivation, "g");
     Simplificate(ansAfterDerivation);
     output::outputAST(ansAfterDerivation);
-    cout << endl;
+    cout << endl << endl;
     delete ansAfterDerivation;
     delete ansTestDerivation;
+
+    TestDerivation = "sin(x)*cos(x)";
+    ansTestDerivation = ast::ToAST(TestDerivation);
+    output::outputAST(ansTestDerivation);
+    cout << endl;
+    ansAfterDerivation = Derivation(ansTestDerivation, "x");
+    Simplificate(ansAfterDerivation);
+    output::outputAST(ansAfterDerivation);
+    cout << endl << endl;
     return 0;
 }

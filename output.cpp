@@ -10,8 +10,6 @@ bool output::isBinOp(const string &c)
 
 void output::outputAST(BasicNode* now, const string& FatherOP)
 {
-    if(now == nullptr)
-        return;
     if(now->getType() == Num)
     {
         double nownum = ((NumNode*)now)->getNum();
@@ -21,6 +19,7 @@ void output::outputAST(BasicNode* now, const string& FatherOP)
             cout << nownum;
         return;
     }
+
     if(now->getType() == Fun)
     {
         FunNode* t = (FunNode*)now;
@@ -40,17 +39,42 @@ void output::outputAST(BasicNode* now, const string& FatherOP)
                 cout << ')';
             return;
         }
-        cout << op << '(';
+
+        if(op == "log")
+        {
+            if(t->sonNode[0]->getType() == Num)
+            {
+                if(((NumNode*)(t->sonNode[0]))->getNum()== std::exp(1))
+                {
+                    cout << "ln" << '(';
+                    outputAST(t->sonNode[1]);
+                    cout << ')';
+                    return;
+                 }
+                else if(((NumNode*)(t->sonNode[0]))->getNum()== 10)
+                {
+                    cout << "lg" << '(';
+                    outputAST(t->sonNode[1]);
+                    cout << ')';
+                    return;
+                }
+            }
+            else
+                cout << "log" << '(';
+        }
+        else
+            cout << op << '(';
         int n = t->getEntity()->getParnum();
         for(int i = 0 ; i < n; i++)
         {
-            outputAST(t->sonNode[i], string(ast::LowestPriority, 1));
+            outputAST(t->sonNode[i]);
             if(i != n - 1)
                 cout << ",";
         }
         cout << ')';
         return;
     }
+
     if(now->getType() == Var)
     {
         cout << ((VarNode*)now)->NAME;

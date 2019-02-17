@@ -46,6 +46,11 @@ BasicNode* BuiltinFunc::sin(vector<BasicNode *> &sonNode)
     return new NumNode(std::sin(BuiltinFunc::getNum(sonNode[0])));
 }
 
+BasicNode* BuiltinFunc::cos(vector<BasicNode *> &sonNode)
+{
+    return new NumNode(std::cos(BuiltinFunc::getNum(sonNode[0])));
+}
+
 BasicNode* BuiltinFunc::log(vector<BasicNode *> &sonNode)
 {
     return new NumNode(std::log(BuiltinFunc::getNum(sonNode[0])) / std::log(BuiltinFunc::getNum(sonNode[1])));

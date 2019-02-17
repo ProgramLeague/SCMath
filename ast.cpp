@@ -16,6 +16,7 @@ static void ast::Init()
     Function* div = new Function(BuiltinFunc::hasTwoSonNodes, BuiltinFunc::div,2);
     Function* pow = new Function(BuiltinFunc::hasTwoSonNodes, BuiltinFunc::pow,2);
     Function* sin = new Function(BuiltinFunc::hasOneSonNode, BuiltinFunc::sin,1);
+    Function* cos = new Function(BuiltinFunc::hasOneSonNode, BuiltinFunc::cos,1);
     Function* log = new Function(BuiltinFunc::hasTwoSonNodes, BuiltinFunc::log, 2);
     //将这些函数置入函数域
     record::globalScope.addFunction("+",add);
@@ -24,6 +25,7 @@ static void ast::Init()
     record::globalScope.addFunction("/",div);
     record::globalScope.addFunction("^",pow);
     record::globalScope.addFunction("sin",sin);
+    record::globalScope.addFunction("cos",cos);
     record::globalScope.addFunction("log", log);
     //Function* entity=runtime::globalScope.functionList["+"]; //在parse阶段，可以这样从函数域中找到函数名对应的函数实体
     //FunNode* testNode=new FunNode(entity); //然后这样通过函数实体创建相应的函数节点
@@ -58,7 +60,7 @@ bool ast::canpush(stack<string> &stackOp, const string& op)
 
 BasicNode* ast::__ToAST(string &s)
 {
-    s += '$';
+    s += LowestPriority;
     stack<BasicNode*> stackAST;
     stack<string> stackOp;
     int n = s.size();
@@ -69,23 +71,23 @@ BasicNode* ast::__ToAST(string &s)
         int j = i;
 
         if ((s[j] == '+' || s[j] == '-') && (j == 0 || isBinOp(s[j - 1])))
-       {
+        {
             j++;
         }//检查负号还是减号
         if(j < n && isNum(s[j]))
         {
             while (j < n && isNum(s[j]))
                 j++;//整数部分
-           if (s[j] == '.' && j + 1 < n && isNum(s[j + 1])) {
+            if (s[j] == '.' && j + 1 < n && isNum(s[j + 1])) {
                 j++;//小数部分
                 while (j < n && isNum(s[j + 1]))
                 {
                     j++;
                 }
-          }
-          temp += s.substr(i,j-i);
-          i = j;
-          stackAST.push(new NumNode(stod(temp)));
+            }
+            temp += s.substr(i,j-i);
+            i = j;
+            stackAST.push(new NumNode(stod(temp)));
         }
 
         else if (j < n && isLetter(s[j]))
@@ -94,18 +96,18 @@ BasicNode* ast::__ToAST(string &s)
                 j++;
             if(j < n && s[j] == '(')//函数
             {
-                 FunNode* node = new FunNode(record::globalScope.functionList[s.substr(i, j - i)]);
-                 //此时s[j] == '('
-                 while(s[j] != ')' && s[j] != LowestPriority)
-                 {
-                     i = j;
-                     j++;
+                FunNode* node = new FunNode(record::globalScope.functionList[s.substr(i, j - i)]);
+                //此时s[j] == '('
+                while(s[j] != ')' && s[j] != LowestPriority)
+                {
+                    i = j;
+                    j++;
                     while(j < n && s[j] != ',' && s[j] != ')' && s[j] != LowestPriority)
                         j++;
                     node->addNode(ToAST(s.substr(i + 1, j - i - 1)));
-                 }
-               stackAST.push(node);
-               i = j + 1;
+                }
+                stackAST.push(node);
+                i = j + 1;
             }
 
             else//变量
@@ -136,13 +138,13 @@ BasicNode* ast::__ToAST(string &s)
 
         if(i < n && (isBinOp(s[i]) || s[i] == LowestPriority))//按理说，一个数字/变量/函数结束之后是一个运算符/字符串结尾
         {
-          if (canpush(stackOp, s.substr(i,1)))
-          {
+            if (canpush(stackOp, s.substr(i,1)))
+            {
                 stackOp.push(s.substr(i,1));
-          }
-          else {
-              while (!canpush(stackOp, s.substr(i,1)))
-              {
+            }
+            else {
+                while (!canpush(stackOp, s.substr(i,1)))
+                {
                     BasicNode* a = stackAST.top();
                     stackAST.pop();
                     BasicNode* b = stackAST.top();
@@ -159,7 +161,7 @@ BasicNode* ast::__ToAST(string &s)
         }
         else
         {
-               throw string("Error string");
+            throw string("Error string");
         }
 
     }

@@ -91,9 +91,9 @@ public:
     void setVarVal(VarNode* node); //传递变量的值到this的值，即需要进行一次解包
     void clearVal();
 
-    #ifdef READABLEGEN
+#ifdef READABLEGEN
     string NAME;
-    #endif
+#endif
 };
 typedef VarNode Variable; //内存实体是Variable，其指针才作为节点（不像某些节点一样是遇到一个就new一次），参考函数实体和函数节点的思想
 
@@ -194,9 +194,9 @@ public:
     void addArgument(VarReference* var); //先在外面new好，然后转移所有权进来
     BasicNode* eval(vector<BasicNode *> &sonNode);
 
-    #ifdef READABLEGEN
+#ifdef READABLEGEN
     string NAME;
-    #endif
+#endif
 };
 
 
@@ -216,10 +216,10 @@ public:
     Function* getEntity(){return this->funEntity;}
     ProNode* getFunBody() {return this->funEntity->getFunBody();}
 
-    #ifdef PARTEVAL
+#ifdef PARTEVAL
     bool giveupEval; //如果里边有符号变量，暂时放弃对此节点（基本为函数节点）的求值，并在此做标记防止根函数节点被视为求值结束而delete
     //所有控制流节点也要有该成员（若控制流条件中含有符号变量，放弃对整个控制流节点的执行（求值））
-    #endif
+#endif
 };
 
 class conditionalControlNode : public BasicNode
@@ -231,9 +231,9 @@ public:
     conditionalControlNode(BasicNode* condition):condition(condition){}
     conditionalControlNode(const conditionalControlNode& n):BasicNode(n){}
 
-    #ifdef PARTEVAL
+#ifdef PARTEVAL
     bool giveupEval;
-    #endif
+#endif
 };
 
 class IfNode : public conditionalControlNode
