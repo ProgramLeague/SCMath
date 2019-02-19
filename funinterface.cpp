@@ -55,3 +55,8 @@ BasicNode* BuiltinFunc::log(vector<BasicNode *> &sonNode)
 {
     return new NumNode(std::log(BuiltinFunc::getNum(sonNode[0])) / std::log(BuiltinFunc::getNum(sonNode[1])));
 }
+
+BasicNode* BuiltinFunc::ln(vector<BasicNode *> &sonNode)
+{
+    return new NumNode(std::log(BuiltinFunc::getNum(sonNode[0])));
+}

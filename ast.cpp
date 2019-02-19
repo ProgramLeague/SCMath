@@ -18,6 +18,7 @@ static void ast::Init()
     Function* sin = new Function(BuiltinFunc::hasOneSonNode, BuiltinFunc::sin,1);
     Function* cos = new Function(BuiltinFunc::hasOneSonNode, BuiltinFunc::cos,1);
     Function* log = new Function(BuiltinFunc::hasTwoSonNodes, BuiltinFunc::log, 2);
+    Function* ln = new Function(BuiltinFunc::hasOneSonNode, BuiltinFunc::ln, 1);
     //将这些函数置入函数域
     record::globalScope.addFunction("+",add);
     record::globalScope.addFunction("-",sub);
@@ -27,6 +28,7 @@ static void ast::Init()
     record::globalScope.addFunction("sin",sin);
     record::globalScope.addFunction("cos",cos);
     record::globalScope.addFunction("log", log);
+    record::globalScope.addFunction("ln", ln);
     //Function* entity=runtime::globalScope.functionList["+"]; //在parse阶段，可以这样从函数域中找到函数名对应的函数实体
     //FunNode* testNode=new FunNode(entity); //然后这样通过函数实体创建相应的函数节点
     BinOpPriority["$"] =0;

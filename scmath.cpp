@@ -50,9 +50,20 @@ void Simplificate(BasicNode *&now)
         }
     }
 
-    //化简各个子树
-    for(int i = 0; i < tempNow->getEntity()->getParnum(); i++)
+    //化简各个子树并求值
+    int countNodeSonNum = 0, n = tempNow->getEntity()->getParnum();
+    for(int i = 0; i < n; i++)
+    {
         Simplificate(now->sonNode[i]);
+        if(now->sonNode[i]->getType() == Num)
+            countNodeSonNum++;
+    }
+    if(countNodeSonNum == n){
+        BasicNode* newnow = now->eval();
+        delete now;
+        now = newnow;
+        return;
+    }
 
     //处理某个值为0/1的问题
     //为了防止将(0+0)+1化简为0+1就停止,这里用从叶向上的方法
@@ -60,7 +71,7 @@ void Simplificate(BasicNode *&now)
     {
         for(int i = 0; i <= 1; i++){
             if(tempNow->sonNode[i]->getType() == Num && ((NumNode*)(tempNow->sonNode[i]))->getNum() == 0){
-                BasicNode * newnow = copyHelp::copyNode(tempNow->sonNode[i ^ 1]);
+                BasicNode* newnow = copyHelp::copyNode(tempNow->sonNode[i ^ 1]);
                 delete now;
                 now = newnow;
                 return;
@@ -72,7 +83,7 @@ void Simplificate(BasicNode *&now)
     {
         for(int i = 0; i <= 1; i++){
             if(tempNow->sonNode[i]->getType() == Num && ((NumNode*)(tempNow->sonNode[i]))->getNum() == 1){
-                BasicNode * newnow = copyHelp::copyNode(tempNow->sonNode[i ^ 1]);
+                BasicNode* newnow = copyHelp::copyNode(tempNow->sonNode[i ^ 1]);
                 delete now;
                 now = newnow;
                 return;
@@ -83,7 +94,7 @@ void Simplificate(BasicNode *&now)
     {
         for(int i = 0; i <= 1; i++){
             if(tempNow->sonNode[i]->getType() == Num && ((NumNode*)(tempNow->sonNode[i]))->getNum() == 0){
-                BasicNode * newnow = new NumNode(0);
+                BasicNode* newnow = new NumNode(0);
                 delete now;
                 now = newnow;
                 return;
@@ -94,18 +105,30 @@ void Simplificate(BasicNode *&now)
     if(tempNow->getEntity()->NAME == "-")//减法右树为0
     {
         if(tempNow->sonNode[1]->getType() == Num && ((NumNode*)(tempNow->sonNode[1]))->getNum() == 0){
-            BasicNode * newnow = copyHelp::copyNode(tempNow->sonNode[0]);
+            BasicNode* newnow = copyHelp::copyNode(tempNow->sonNode[0]);
             delete now;
             now = newnow;
             return;
         }
     }
-    //减法左树为0不变
+
+    if(tempNow->getEntity()->NAME == "-")//减法左树为0
+    {
+        if(tempNow->sonNode[1]->getType() == Num && ((NumNode*)(tempNow->sonNode[0]))->getNum() == 0){
+            BasicNode* newnow = new FunNode(record::globalScope.functionList["*"]);
+            BasicNode* newnowson = copyHelp::copyNode(tempNow->sonNode[1]);
+            newnow->addNode(new NumNode(-1));
+            newnow->addNode(newnowson);
+            delete now;
+            now = newnow;
+            return;
+        }
+    }
 
     if(tempNow->getEntity()->NAME == "/")//除法左树为0
     {
         if(tempNow->sonNode[0]->getType() == Num && ((NumNode*)(tempNow->sonNode[0]))->getNum() == 0){
-            BasicNode * newnow = new NumNode(0);
+            BasicNode* newnow = new NumNode(0);
             delete now;
             now = newnow;
             return;
@@ -216,6 +239,15 @@ BasicNode* Derivation(BasicNode* now, const string &value){
             delete lnf;
             delete lng;
             delete num2;
+            return retn;
+        }
+
+        if(op == "ln")//以e为底对数函数(ln(f))' == f' / f
+        {
+            BasicNode* f = temp->sonNode[0];
+            BasicNode* df = Derivation(f, value);
+            BasicNode* retn = D(df) / D(f);
+            delete df;
             return retn;
         }
     }

@@ -58,6 +58,8 @@ void output::outputAST(BasicNode* now, const string& FatherOP)
                     cout << ')';
                     return;
                 }
+                else
+                    cout << "log" << '(';
             }
             else
                 cout << "log" << '(';

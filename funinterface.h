@@ -21,4 +21,5 @@ public:
     static BasicNode* cos(vector<BasicNode*>&sonNode);
 
     static BasicNode* log(vector<BasicNode*>&sonNode);
+    static BasicNode* ln(vector<BasicNode*>&sonNode);
 };
