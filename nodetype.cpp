@@ -3,7 +3,7 @@
 
 bool copyHelp::isLiteral(int type) //warn:是否为字面量，添加新的字面量要进行修改
 {
-    return (type==Num||type==String||type==Arr||type==Null); //暂且先把Null安排上
+    return (type==Num||type==String||type==Arr||type==Matrix||type==Vector||type==Null); //暂且先把Null安排上
 }
 
 bool copyHelp::isLiteral(BasicNode* node)
@@ -20,11 +20,7 @@ bool isNotAssignable(BasicNode* val) //warn:是否不可赋值给变量，支持
 
 BasicNode::~BasicNode()
 {
-    for(BasicNode* node:this->sonNode)
-    {
-        if(node->getType()!=Var) //这个随着域释放，不被连环析构
-            delete node;
-    }
+    copyHelp::delTree(this);
 }
 
 

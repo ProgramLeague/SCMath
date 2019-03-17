@@ -21,4 +21,5 @@ HEADERS += \
     output.h \
     excep.h \
     marco.h \
-    scmath.h
+    scmath.h \
+    matrix.hpp

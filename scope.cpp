@@ -11,13 +11,14 @@ Scope::~Scope()
         delete i;
 }
 
-void Scope::addVariable(string name)
+Variable* Scope::addVariable(string name)
 {
     Variable* var=new Variable();
 #ifdef READABLEGEN
     var->NAME=name;
 #endif
     this->variableList[name]=var;
+    return var;
 }
 
 void Scope::addVariable(string name, Variable *var)

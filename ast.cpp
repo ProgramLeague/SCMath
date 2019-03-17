@@ -19,19 +19,57 @@ static void ast::Init()
     Function* cos = new Function(BuiltinFunc::hasOneSonNode, BuiltinFunc::cos,1);
     Function* log = new Function(BuiltinFunc::hasTwoSonNodes, BuiltinFunc::log, 2);
     Function* ln = new Function(BuiltinFunc::hasOneSonNode, BuiltinFunc::ln, 1);
+
+    Function* assignment = new Function(BuiltinFunc::assignmentCheck, BuiltinFunc::assignment, 2);
+
+    Function* vecDot = new Function(BuiltinFunc::twoVec, BuiltinFunc::vecDot, 2);
+    Function* matDot = new Function(BuiltinFunc::twoMat, BuiltinFunc::matDot, 2);
+    Function* matAdd = new Function(BuiltinFunc::twoMat, BuiltinFunc::matAdd, 2);
+    Function* vecAdd = new Function(BuiltinFunc::twoVec, BuiltinFunc::vecAdd, 2);
+    Function* vecSub = new Function(BuiltinFunc::twoVec, BuiltinFunc::vecSub, 2);
+    Function* matSub = new Function(BuiltinFunc::twoMat, BuiltinFunc::matSub, 2);
+    Function* vecMul = new Function(BuiltinFunc::vecNum, BuiltinFunc::vecMul, 2);
+    Function* matMul = new Function(BuiltinFunc::matNum, BuiltinFunc::matMul, 2);
+    Function* getRVector = new Function(BuiltinFunc::matNum, BuiltinFunc::getRVector, 2);
+    Function* getCVector = new Function(BuiltinFunc::matNum, BuiltinFunc::getCVector, 2);
+    Function* setCVector = new Function(BuiltinFunc::pmatVecNum, BuiltinFunc::setCVector, 3);
+    Function* setRVector = new Function(BuiltinFunc::pmatVecNum, BuiltinFunc::setRVector, 3);
+    Function* det = new Function(BuiltinFunc::oneMat, BuiltinFunc::det, 1);
+    Function* linerSolve = new Function(BuiltinFunc::twoMat, BuiltinFunc::linerSolve, 2);
     //将这些函数置入函数域
     record::globalScope.addFunction("+",add);
     record::globalScope.addFunction("-",sub);
     record::globalScope.addFunction("*",mul);
     record::globalScope.addFunction("/",div);
     record::globalScope.addFunction("^",pow);
+    record::globalScope.addFunction("=",assignment);
+    //fix:目前=是通过局部求值实现的，即在被赋值变量原先没有值的情况下，局部求值模式下eval结果仍然为
+    //变量本身，这样传进=函数之后左边儿子就是变量本身，可以正确赋值。一旦变量已经被赋值，那进入=前
+    //就会被eval为它的值，值不能赋值给值，这就错了。因此现在这个写法不好。正确的做法应该是在parse阶段
+    //创建每个变量的指针（二级varnode），然后将这个指针作为=的左边儿子
     record::globalScope.addFunction("sin",sin);
     record::globalScope.addFunction("cos",cos);
     record::globalScope.addFunction("log", log);
     record::globalScope.addFunction("ln", ln);
+
+    record::globalScope.addFunction("linerSolve", linerSolve);
+    record::globalScope.addFunction("det", det);
+    record::globalScope.addFunction("setRVector", setRVector);
+    record::globalScope.addFunction("setCVector", setCVector);
+    record::globalScope.addFunction("getCVector", getCVector);
+    record::globalScope.addFunction("getRVector", getRVector);
+    record::globalScope.addFunction("matMul", matMul);
+    record::globalScope.addFunction("vecMul", vecMul);
+    record::globalScope.addFunction("matSub", matSub);
+    record::globalScope.addFunction("vecSub", vecSub);
+    record::globalScope.addFunction("vecAdd", vecAdd);
+    record::globalScope.addFunction("matAdd", matAdd);
+    record::globalScope.addFunction("matDot", matDot);
+    record::globalScope.addFunction("vecDot", vecDot);
     //Function* entity=runtime::globalScope.functionList["+"]; //在parse阶段，可以这样从函数域中找到函数名对应的函数实体
     //FunNode* testNode=new FunNode(entity); //然后这样通过函数实体创建相应的函数节点
     BinOpPriority["$"] =0;
+    BinOpPriority["="] =1;
     BinOpPriority["+"] =10;
     BinOpPriority["-"] =10;
     BinOpPriority["*"] =20;
@@ -46,7 +84,7 @@ bool ast::isNum(const char &c)
 
 bool ast::isBinOp(const char &c)
 {
-    return c == '+' || c == '-' || c == '*' || c == '/' || c == '^';
+    return c == '+' || c == '-' || c == '*' || c == '/' || c == '^' || c=='=';
 }
 
 bool ast::isLetter(const char &c)
@@ -96,9 +134,10 @@ BasicNode* ast::__ToAST(string &s)
         {
             while(j < n && isLetter(s[j]))
                 j++;
-            if(j < n && s[j] == '(')//函数
+            if(j < n && s[j] == '(') //函数
             {
-                FunNode* node = new FunNode(record::globalScope.functionList[s.substr(i, j - i)]);
+                string name=s.substr(i, j - i);
+                FunNode* node = new FunNode(record::globalScope.functionList[name]);
                 //此时s[j] == '('
                 while(s[j] != ')' && s[j] != LowestPriority)
                 {
@@ -119,14 +158,19 @@ BasicNode* ast::__ToAST(string &s)
                 i = j + 1;
             }
 
-            else//变量
+            else //变量
             {
-                record::globalScope.addVariable(s.substr(i, j -  i));
-                stackAST.push(record::globalScope.variableList[s.substr(i, j - i)]);
+                string name=s.substr(i, j -  i);
+                if(record::globalScope.haveVariable(name)==false) //先前没有这变量
+                {
+                    Variable* v=record::globalScope.addVariable(name);
+                    Variable* pv=record::globalScope.addVariable("ptr"+name);
+                    pv->setBorrowVal(v);
+                }
+                stackAST.push(record::globalScope.variableList[name]);
                 i = j;
             }
         }
-
         else if(j < n && s[j] == '(')//含括号的表达式
         {
             i = j;
@@ -183,7 +227,7 @@ BasicNode* ast::ToAST(string s){
         isInit = true;
     }
     for(string::iterator c = s.begin(); c != s.end(); c++){
-        if(*c == '\x20' || * c == '\n' || *c == 't'){
+        if(*c == '\x20' || * c == '\n' || *c == '\t'){
             s.erase(c);
             c--;
         }

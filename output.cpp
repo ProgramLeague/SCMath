@@ -1,4 +1,5 @@
 #include "output.h"
+#include "matrix.hpp"
 
 using namespace output;
 
@@ -81,6 +82,15 @@ void output::outputAST(BasicNode* now, const string& FatherOP)
     {
         cout << ((VarNode*)now)->NAME;
     }
+
+    if(now->getType()==Matrix)
+        ((matrixNode*)now)->output();
+
+    if(now->getType()==Vector)
+        ((vectorNode*)now)->output();
+
+    if(now->getType()==Null)
+        return;
 }
 
 void output::outputASTstruct(BasicNode* now, int depth)//方便输出AST结构(并没有找到别的好方法)

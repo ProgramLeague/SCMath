@@ -1,6 +1,11 @@
 #pragma once
 #include "nodetype.h"
-#include<cmath>
+#include <cmath>
+
+#define TypeCheck(name) static bool name(vector<BasicNode*>&sonNode)
+#define _TypeCheck(name) bool BuiltinFunc::name(vector<BasicNode*>&sonNode)
+#define FunBody(name) static BasicNode* name(vector<BasicNode*>&sonNode)
+#define _FunBody(name) BasicNode* BuiltinFunc::name(vector<BasicNode*>&sonNode)
 
 class BuiltinFunc
 {
@@ -8,18 +13,44 @@ private:
     static double getNum(BasicNode* node);
 public:
     //判断函数参数个数是否合法
-    static bool hasOneSonNode(vector<BasicNode*>&sonNode);
-    static bool hasTwoSonNodes(vector<BasicNode*>&sonNode);
+    TypeCheck(hasOneSonNode);
+    TypeCheck(hasTwoSonNodes);
+    TypeCheck(assignmentCheck);
+
+    TypeCheck(oneMat);
+    TypeCheck(twoVec);
+    TypeCheck(twoMat);
+    TypeCheck(vecNum);
+    TypeCheck(matNum);
+    TypeCheck(matVec);
+    TypeCheck(pmatVecNum);
     //内置函数
-    static BasicNode* add(vector<BasicNode*>&sonNode);
-    static BasicNode* sub(vector<BasicNode*>&sonNode);
-    static BasicNode* mul(vector<BasicNode*>&sonNode);
-    static BasicNode* div(vector<BasicNode*>&sonNode);
-    static BasicNode* pow(vector<BasicNode*>&sonNode);
+    FunBody(add);
+    FunBody(sub);
+    FunBody(mul);
+    FunBody(div);
+    FunBody(pow);
 
-    static BasicNode* sin(vector<BasicNode*>&sonNode);
-    static BasicNode* cos(vector<BasicNode*>&sonNode);
+    FunBody(sin);
+    FunBody(cos);
 
-    static BasicNode* log(vector<BasicNode*>&sonNode);
-    static BasicNode* ln(vector<BasicNode*>&sonNode);
+    FunBody(log);
+    FunBody(ln);
+
+    FunBody(assignment);
+
+    FunBody(vecDot);
+    FunBody(matDot);
+    FunBody(vecAdd);
+    FunBody(matAdd);
+    FunBody(vecSub);
+    FunBody(matSub);
+    FunBody(vecMul);
+    FunBody(matMul);
+    FunBody(getRVector);
+    FunBody(getCVector);
+    FunBody(setRVector);
+    FunBody(setCVector);
+    FunBody(det);
+    FunBody(linerSolve);
 };

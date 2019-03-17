@@ -85,7 +85,7 @@ protected:
 public:
     virtual int getType() {return Var;}
     virtual void addNode(BasicNode*) {throw addSonExcep(Var);}
-    virtual BasicNode* eval();
+    virtual BasicNode* eval(); //字面量会拷贝
     virtual ~VarNode();
     VarNode(int valtype=-1);
     VarNode(VarNode &n);
@@ -98,7 +98,7 @@ public:
     void setBorrowVal(BasicNode* val); //直接对值进行赋值，用这个不转移所有权（一般赋值为变量指针用）
     void setVarVal(VarNode* node); //传递变量的值到this的值，即需要进行一次解包
     void clearVal();
-
+    BasicNode* getVal() {return this->val;} //不会拷贝字面量
 #ifdef READABLEGEN
     string NAME;
 #endif
@@ -278,4 +278,5 @@ public:
     static BasicNode* copyVal(BasicNode* node);
     static bool isLiteral(BasicNode* node);
     static bool isLiteral(int type);
+    static void delTree(BasicNode* n);
 };

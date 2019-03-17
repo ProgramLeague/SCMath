@@ -1,4 +1,5 @@
 #include "nodetype.h"
+#include "matrix.hpp"
 
 BasicNode* copyHelp::copyVal(BasicNode* node) //（值类型）拷贝
 {
@@ -7,10 +8,14 @@ BasicNode* copyHelp::copyVal(BasicNode* node) //（值类型）拷贝
         return new NumNode(*dynamic_cast<NumNode*>(node));
     if(node->getType()==String)
         return new StringNode(*dynamic_cast<StringNode*>(node));
+    if(node->getType()==Matrix)
+        return new matrixNode(*dynamic_cast<matrixNode*>(node));
+    if(node->getType()==Vector)
+        return new vectorNode(*dynamic_cast<vectorNode*>(node));
     if(node->getType()==Arr)
         return new ArrNode(*dynamic_cast<ArrNode*>(node));
     if(node->getType()==Null)
-        return new nullNode(*dynamic_cast<nullNode*>(node));
+        return new nullNode();
     //warn:支持更多具拷贝构造函数类型（目前都是字面量）后还需要在此处进行添加
     return nullptr; //如果进行参数检查了不会走到这一步
 }
@@ -30,6 +35,18 @@ BasicNode* copyHelp::copyNode(BasicNode* node) //拷贝单个子节点，warn:�
     if(node->getType()==While)
         return new WhileNode(*dynamic_cast<WhileNode*>(node));
     throw string("The type is not regular son nodes to copy"); //Pro不作为常规子节点，不在此考虑
+}
+
+void copyHelp::delTree(BasicNode *n)
+{
+    for(BasicNode* node:n->sonNode)
+    {
+        if(node->getType()!=Var) //fix:这里没有VarRef，是否错误？
+        {
+            delete node;
+            node=nullptr;
+        }
+    }
 }
 
 BasicNode::BasicNode(const BasicNode &n)
@@ -52,7 +69,7 @@ WhileNode::WhileNode(const WhileNode &n):conditionalControlNode(n)
     this->body=new ProNode(*(n.body));
 }
 
-VarNode::VarNode(VarNode &n)
+VarNode::VarNode(VarNode &n):BasicNode(n)
 {
     this->typeRestrictFlag=n.istypeRestrict();
     this->ownershipFlag=n.isOwnership();
