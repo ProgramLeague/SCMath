@@ -138,21 +138,25 @@ BasicNode* ast::__ToAST(string &s)
             {
                 string name=s.substr(i, j - i);
                 FunNode* node = new FunNode(record::globalScope.functionList[name]);
+                int countleftParenthesis = 1;
                 //此时s[j] == '('
-                while(s[j] != ')' && s[j] != LowestPriority)
+                i=j;
+                while(countleftParenthesis != 0 && j < n)
                 {
-                    int countleftParenthesis = 1;
-                    i = j;
                     j++;
-                    while(j < n && s[j] != ',' && s[j] != LowestPriority && countleftParenthesis != 0)
+                    if(j < n && (s[j] == ','|| s[j] == ')') && countleftParenthesis == 1)
                     {
-                        j++;
+                        node->addNode(ToAST(s.substr(i + 1, j - i - 1)));
+                        if(s[j]==')') countleftParenthesis--;
+                        i=j;
+                    }
+                    else
+                    {
                         if(s[j] == '(')
                             countleftParenthesis++;
                         if(s[j] == ')')
                             countleftParenthesis--;
                     }
-                    node->addNode(ToAST(s.substr(i + 1, j - i - 1)));
                 }
                 stackAST.push(node);
                 i = j + 1;
@@ -174,8 +178,15 @@ BasicNode* ast::__ToAST(string &s)
         else if(j < n && s[j] == '(')//含括号的表达式
         {
             i = j;
-            while(j < n && s[j] != ')')
+            int countleftParenthesis = 1;
+            while(j < n && countleftParenthesis > 0)
+            {
                 j++;
+                if(s[j] == '(')
+                    countleftParenthesis++;
+                if(s[j] == ')')
+                    countleftParenthesis--;
+            }
             if(s[j] == ')')
             {
                 stackAST.push(ToAST(s.substr(i + 1, j - i - 1)));
