@@ -176,6 +176,32 @@ public:
         }
     }
 
+    double algCofactor(unsigned int i,unsigned int j)
+    {
+        matrixNode mb = matrixNode(r - 1, r - 1);
+        for (unsigned int r = 0; r < this->r; r++)
+        {
+            for (unsigned int c = 0; c < this->c; c++)
+            {
+                if(c==j || r==i)
+                    continue;
+
+                int subR,subC;
+                if (c > j)
+                    subC = c - 1;
+                else
+                    subC = c;
+                if(r > i)
+                    subR = r-1;
+                else
+                    subR = r;
+
+                mb.m[subR][subC] = this->m[r][c];
+            }
+        }
+        return pow(-1, i + j) * mb.det();
+    }
+
     double det()
     {
         if (this->r != this->c)
@@ -188,21 +214,32 @@ public:
             //得到从当前矩阵中划去第0行和第j列的所有元素后得到的矩阵
             for (unsigned int j = 0; j < this->r; j++)
             {
-                matrixNode mb = matrixNode(r - 1, r - 1);
-                for (unsigned int r = 1; r < this->r; r++)
-                {
-                    for (unsigned int c = 0; c < this->c; c++)
-                    {
-                        if (c > j)
-                            mb.m[r - 1][c - 1] = this->m[r][c];
-                        else if (c < j)
-                            mb.m[r - 1][c] = this->m[r][c];
-                    }
-                }
-                result += pow(-1, 0 - j) * this->m[0][j] * mb.det();
+                result += this->algCofactor(0,j) * this->m[0][j];
             }
             return result;
         }
+    }
+
+    matrixNode adjoint()
+    {
+        if (this->r != this->c)
+            throw string("只有方阵才能求伴随矩阵");
+        else
+        {
+            matrixNode result = matrixNode(this->r,this->c);
+            for (unsigned int i = 0; i < this->r; i++)
+            {
+                for (unsigned int j = 0; j < this->c; j++)
+                    result.m[i][j]=this->algCofactor(j,i);
+            }
+            return result;
+        }
+    }
+
+    matrixNode inv()
+    {
+        double d=this->det();
+        return this->adjoint().mul(1/d);
     }
 
     matrixNode dot(matrixNode &m2)

@@ -210,6 +210,18 @@ BasicNode* BuiltinFunc::det(vector<BasicNode *> &sonNode)
     return new NumNode(m1->det());
 }
 
+BasicNode* BuiltinFunc::inv(vector<BasicNode *> &sonNode)
+{
+    matrixNode* m1=(matrixNode*)sonNode[0];
+    return new matrixNode(m1->inv());
+}
+
+BasicNode* BuiltinFunc::adjoint(vector<BasicNode *> &sonNode)
+{
+    matrixNode* m1=(matrixNode*)sonNode[0];
+    return new matrixNode(m1->adjoint());
+}
+
 BasicNode* BuiltinFunc::linerSolve(vector<BasicNode *> &sonNode)
 {
     matrixNode* m1=(matrixNode*)sonNode[0];

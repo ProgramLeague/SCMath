@@ -52,5 +52,7 @@ public:
     FunBody(setRVector);
     FunBody(setCVector);
     FunBody(det);
+    FunBody(inv);
+    FunBody(adjoint);
     FunBody(linerSolve);
 };

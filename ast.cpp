@@ -35,6 +35,8 @@ static void ast::Init()
     Function* setCVector = new Function(BuiltinFunc::pmatVecNum, BuiltinFunc::setCVector, 3);
     Function* setRVector = new Function(BuiltinFunc::pmatVecNum, BuiltinFunc::setRVector, 3);
     Function* det = new Function(BuiltinFunc::oneMat, BuiltinFunc::det, 1);
+    Function* inv = new Function(BuiltinFunc::oneMat, BuiltinFunc::inv, 1);
+    Function* adjoint = new Function(BuiltinFunc::oneMat, BuiltinFunc::adjoint, 1);
     Function* linerSolve = new Function(BuiltinFunc::twoMat, BuiltinFunc::linerSolve, 2);
     //将这些函数置入函数域
     record::globalScope.addFunction("+",add);
@@ -54,6 +56,8 @@ static void ast::Init()
 
     record::globalScope.addFunction("linerSolve", linerSolve);
     record::globalScope.addFunction("det", det);
+    record::globalScope.addFunction("inv", inv);
+    record::globalScope.addFunction("adjoint", adjoint);
     record::globalScope.addFunction("setRVector", setRVector);
     record::globalScope.addFunction("setCVector", setCVector);
     record::globalScope.addFunction("getCVector", getCVector);
