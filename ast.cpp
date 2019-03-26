@@ -169,13 +169,14 @@ BasicNode* ast::__ToAST(string &s)
             else //变量
             {
                 string name=s.substr(i, j -  i);
-                if(record::globalScope.haveVariable(name)==false) //先前没有这变量
+                Variable* v=record::globalScope.findVariable(name);
+                if(v==nullptr) //先前没有这变量
                 {
-                    Variable* v=record::globalScope.addVariable(name);
+                    v=record::globalScope.addVariable(name);
                     Variable* pv=record::globalScope.addVariable("ptr"+name);
                     pv->setBorrowVal(v);
                 }
-                stackAST.push(record::globalScope.variableList[name]);
+                stackAST.push(v);
                 i = j;
             }
         }
