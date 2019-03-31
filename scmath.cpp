@@ -50,7 +50,7 @@ void Simplificate(BasicNode *&now)
         }
     }
 
-    //化简各个子树并求值
+    //化简各个子树并求值，注意：没有检查除数为0
     int countNodeSonNum = 0, n = tempNow->getEntity()->getParnum();
     for(int i = 0; i < n; i++)
     {
@@ -173,81 +173,64 @@ BasicNode* Derivation(BasicNode* now, const string &value){
 
         if(op == "/")//除法:f / g == (f' * g - g' * f) / g ^ 2
         {
-            BasicNode *f = temp->sonNode[0], *g = temp->sonNode[1];
+            BasicNode *f = copyHelp::copyNode(temp->sonNode[0]), *g = copyHelp::copyNode(temp->sonNode[1]);
             BasicNode *df = Derivation(f, value), *dg = Derivation(g, value);
             BasicNode* num2 = new NumNode(2);
-            BasicNode* retn = D(D(D(df) * D(g)) - D(D(dg) * D(f))) / D(D(g) ^ D(num2));//^的优先级比较低，要加括号
-            delete df;
-            delete dg;
+            BasicNode* retn = D(D(D(df) * D(g)) - D(D(dg) * D(f))) / D(D(copyHelp::copyNode(g)) ^ D(num2));//^的优先级比较低，要加括号
+            //copyHelp::copyNode(g)是防止两个g指向相同部分
+            //此时f等的所有权转移到了retn里面
             return retn;
         }
 
         if(op == "^")//幂:(f^g)' == (f ^ g) * (g' * ln f + g * f' / f)
         {
-            BasicNode *f = temp->sonNode[0], *g = temp->sonNode[1];
+            BasicNode *f = copyHelp::copyNode(temp->sonNode[0]), *g = copyHelp::copyNode(temp->sonNode[1]);
             BasicNode *df = Derivation(f, value), *dg = Derivation(g, value);
-            BasicNode* lnf = new FunNode(record::globalScope.functionList["log"]);
-            lnf->addNode(new NumNode(std::exp(1)));
+            BasicNode* lnf = new FunNode(record::globalScope.functionList["ln"]);
             lnf->addNode(copyHelp::copyNode(f));
-            BasicNode* retn = D(D(f) ^ D(g)) * D(D(D(dg) * D(lnf)) + D(D(D(g) * D(df)) / D(f)));
-            delete df;
-            delete dg;
-            delete lnf;
+            BasicNode* retn = D(D(f) ^ D(g)) * D(D(D(dg) * D(lnf)) + D(D(D(copyHelp::copyNode(g)) * D(df)) / D(copyHelp::copyNode(f))));
             return retn;
         }
 
         if(op == "sin")//正弦函数:(sin(f))' == f' * cos(f)
         {
-            BasicNode *f = temp->sonNode[0];
+            BasicNode *f = copyHelp::copyNode(temp->sonNode[0]);
             BasicNode *df = Derivation(f, value);
             BasicNode* cosf = new FunNode(record::globalScope.functionList["cos"]);
             cosf->addNode(copyHelp::copyNode(f));
             BasicNode* retn = D(df) * D(cosf);
-            delete df;
-            delete cosf;
             return retn;
         }
 
         if(op == "cos")//余弦函数:(cos(f))' == -1 * f' * sin(f)
         {
-            BasicNode *f = temp->sonNode[0];
+            BasicNode *f = copyHelp::copyNode(temp->sonNode[0]);
             BasicNode *df = Derivation(f, value);
             BasicNode *numNeg1 = new NumNode(-1);
             BasicNode* sinf = new FunNode(record::globalScope.functionList["sin"]);
             sinf->addNode(copyHelp::copyNode(f));
             BasicNode* retn = D(numNeg1) * D(D(df) * D(sinf));
-            delete df;
-            delete numNeg1;
-            delete sinf;
             return retn;
         }
 
-        if(op == "log")//对数函数:(log(f, g))' = g' / (g * log(e, f)) - f' * log(e, g) / (f * log(e, f) ^ 2)
+        if(op == "log")//对数函数:(log(f, g))' = g' / (g * ln(f)) - f' * ln(g) / (f * ln(f) ^ 2)
         {
-            BasicNode *f = temp->sonNode[0], *g = temp->sonNode[1];
+            BasicNode *f = copyHelp::copyNode(temp->sonNode[0]), *g = copyHelp::copyNode(temp->sonNode[1]);
             BasicNode *df = Derivation(f, value), *dg = Derivation(g, value);
-            BasicNode* lnf = new FunNode(record::globalScope.functionList["log"]);
-            lnf->addNode(new NumNode(std::exp(1)));
+            BasicNode* lnf = new FunNode(record::globalScope.functionList["ln"]);
             lnf->addNode(copyHelp::copyNode(f));
-            BasicNode* lng = new FunNode(record::globalScope.functionList["log"]);
-            lng->addNode(new NumNode(std::exp(1)));
+            BasicNode* lng = new FunNode(record::globalScope.functionList["ln"]);
             lng->addNode(copyHelp::copyNode(g));
             BasicNode* num2 = new NumNode(2);
-            BasicNode* retn = D(D(dg) / D(D(g) * D(lnf))) - D(D(df) * D(D(lng) / D(D(f) * D(D(lnf) ^ D(num2)))));
-            delete df;
-            delete dg;
-            delete lnf;
-            delete lng;
-            delete num2;
+            BasicNode* retn = D(D(dg) / D(D(g) * D(lnf))) - D(D(df) * D(D(lng) / D(D(f) * D(D(copyHelp::copyNode(lnf)) ^ D(num2)))));
             return retn;
         }
 
         if(op == "ln")//以e为底对数函数(ln(f))' == f' / f
         {
-            BasicNode* f = temp->sonNode[0];
+            BasicNode* f = copyHelp::copyNode(temp->sonNode[0]);
             BasicNode* df = Derivation(f, value);
             BasicNode* retn = D(df) / D(f);
-            delete df;
             return retn;
         }
     }

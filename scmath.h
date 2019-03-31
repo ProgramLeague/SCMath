@@ -2,5 +2,5 @@
 #include "ast.h"
 #include "nodetype.h"
 
-void Simplificate(BasicNode *&now);
-BasicNode* Derivation(BasicNode* now, const string &value);
+void Simplificate(BasicNode *&);
+BasicNode* Derivation(BasicNode* , const string &);

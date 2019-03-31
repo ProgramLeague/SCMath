@@ -111,7 +111,7 @@ void output::outputASTstruct(BasicNode* now, int depth)//方便输出AST结构(�
     {
         FunNode* temp = (FunNode*)now;
         int n = temp->getEntity()->getParnum();
-        cout << temp->getEntity()->NAME << endl                                                ;
+        cout << temp->getEntity()->NAME << endl;
         for(int i = 0; i < n; i++)
             outputASTstruct(temp->sonNode[i], depth+1);;
     }

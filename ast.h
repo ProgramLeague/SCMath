@@ -24,7 +24,7 @@ namespace ast
     static bool isNum(const char &);
     static bool isBinOp(const char &);
     static bool isLetter(const char &);
-    static BasicNode* __ToAST(string &);
+    static BasicNode* __ToAST(string &, Scope*);
 
-    BasicNode* ToAST(string);
+    BasicNode* ToAST(string, Scope* = &record::globalScope);
 }

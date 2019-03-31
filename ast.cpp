@@ -102,7 +102,7 @@ bool ast::canpush(stack<string> &stackOp, const string& op)
     return BinOpPriority[op] > BinOpPriority[stackOp.top()];
 }
 
-BasicNode* ast::__ToAST(string &s)
+BasicNode* ast::__ToAST(string &s, Scope* sc)
 {
     s += LowestPriority;
     stack<BasicNode*> stackAST;
@@ -141,7 +141,7 @@ BasicNode* ast::__ToAST(string &s)
             if(j < n && s[j] == '(') //函数
             {
                 string name=s.substr(i, j - i);
-                FunNode* node = new FunNode(record::globalScope.functionList[name]);
+                FunNode* node = new FunNode(sc->findFunction(name));
                 int countleftParenthesis = 1;
                 //此时s[j] == '('
                 i=j;
@@ -150,7 +150,7 @@ BasicNode* ast::__ToAST(string &s)
                     j++;
                     if(j < n && (s[j] == ','|| s[j] == ')') && countleftParenthesis == 1)
                     {
-                        node->addNode(ToAST(s.substr(i + 1, j - i - 1)));
+                        node->addNode(__ToAST(temp = s.substr(i + 1, j - i - 1), sc));
                         if(s[j]==')') countleftParenthesis--;
                         i=j;
                     }
@@ -169,11 +169,11 @@ BasicNode* ast::__ToAST(string &s)
             else //变量
             {
                 string name=s.substr(i, j -  i);
-                Variable* v=record::globalScope.findVariable(name);
+                Variable* v=sc->findVariable(name);
                 if(v==nullptr) //先前没有这变量
                 {
-                    v=record::globalScope.addVariable(name);
-                    Variable* pv=record::globalScope.addVariable("ptr"+name);
+                    v=sc->addVariable(name);
+                    Variable* pv=sc->addVariable("ptr"+name);
                     pv->setBorrowVal(v);
                 }
                 stackAST.push(v);
@@ -194,12 +194,12 @@ BasicNode* ast::__ToAST(string &s)
             }
             if(s[j] == ')')
             {
-                stackAST.push(ToAST(s.substr(i + 1, j - i - 1)));
+                stackAST.push(__ToAST(temp = s.substr(i + 1, j - i - 1), sc));//为了让参数1变为左值
                 i = j + 1;//+1是要过掉‘)’
             }
             else//读到了字符串尾还是没有右括号
             {
-                stackAST.push(ToAST(s.substr(i + 1, j - i - 2)));
+                stackAST.push(__ToAST(temp = s.substr(i + 1, j - i - 2), sc));
                 i = j - 1;//应该忽略掉字符串结尾的$，便于下面判断是否能进stackOp
             }
         }
@@ -220,7 +220,7 @@ BasicNode* ast::__ToAST(string &s)
                     stackAST.pop();
                     string c = stackOp.top();
                     stackOp.pop();
-                    FunNode* node = new FunNode(record::globalScope.functionList[c]);
+                    FunNode* node = new FunNode(sc->findFunction(c));
                     node->addNode(b);
                     node->addNode(a);
                     stackAST.push(node);
@@ -237,7 +237,7 @@ BasicNode* ast::__ToAST(string &s)
     return stackAST.top();
 }
 
-BasicNode* ast::ToAST(string s){
+BasicNode* ast::ToAST(string s, Scope* sc){
     if(!isInit){
         Init();
         isInit = true;
@@ -248,5 +248,5 @@ BasicNode* ast::ToAST(string s){
             c--;
         }
     }
-    return __ToAST(s);
+    return __ToAST(s, sc);
 }

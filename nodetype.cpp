@@ -27,40 +27,40 @@ BasicNode::~BasicNode()
 BasicNode* BasicNode::operator +(BasicNode& rhs)
 {
     BasicNode* retn = new FunNode(record::globalScope.functionList["+"]);
-    retn->addNode(copyHelp::copyNode(this));
-    retn->addNode(copyHelp::copyNode(&rhs));
+    retn->addNode(this);
+    retn->addNode(&rhs);
     return retn;
 }
 
 BasicNode* BasicNode::operator -(BasicNode& rhs)
 {
     BasicNode* retn = new FunNode(record::globalScope.functionList["-"]);
-    retn->addNode(copyHelp::copyNode(this));
-    retn->addNode(copyHelp::copyNode(&rhs));
+    retn->addNode(this);
+    retn->addNode(&rhs);
     return retn;
 }
 
 BasicNode* BasicNode::operator *(BasicNode& rhs)
 {
     BasicNode* retn = new FunNode(record::globalScope.functionList["*"]);
-    retn->addNode(copyHelp::copyNode(this));
-    retn->addNode(copyHelp::copyNode(&rhs));
+    retn->addNode(this);
+    retn->addNode(&rhs);
     return retn;
 }
 
 BasicNode* BasicNode::operator /(BasicNode& rhs)
 {
     BasicNode* retn = new FunNode(record::globalScope.functionList["/"]);
-    retn->addNode(copyHelp::copyNode(this));
-    retn->addNode(copyHelp::copyNode(&rhs));
+    retn->addNode(this);
+    retn->addNode(&rhs);
     return retn;
 }
 
 BasicNode* BasicNode::operator ^(BasicNode& rhs)
 {
     BasicNode* retn = new FunNode(record::globalScope.functionList["^"]);
-    retn->addNode(copyHelp::copyNode(this));
-    retn->addNode(copyHelp::copyNode(&rhs));
+    retn->addNode(this);
+    retn->addNode(&rhs);
     return retn;
 }
 

@@ -72,7 +72,7 @@ int main()
     output::outputAST(ansAfterDerivation);
     cout << endl << endl;
 
-    TestDerivation = "log(2.7182818,cos(x))";
+    TestDerivation = "ln(cos(x))";
     ansTestDerivation = ast::ToAST(TestDerivation);
     output::outputAST(ansTestDerivation);
     cout << endl;
