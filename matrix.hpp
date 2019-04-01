@@ -285,6 +285,28 @@ public:
             throw string("两个矩阵维度不对不能相加");
     }
 
+    void rsub(unsigned int r1,unsigned int r2,double m)
+    {
+        vectorNode vr1=this->getRVector(r1);
+        vectorNode vr2=this->getRVector(r2);
+        vectorNode vr22=vr2.mul(-1*m);
+        this->setRVector(vr1.add(vr22),r1);
+    }
+
+    void rmul(unsigned int r,double m)
+    {
+        vectorNode vr=this->getRVector(r);
+        this->setRVector(vr.mul(m),r);
+    }
+
+    void rswap(unsigned int r1,unsigned int r2)
+    {
+        vectorNode vr1=this->getRVector(r1);
+        vectorNode vr2=this->getRVector(r2);
+        this->setRVector(vr1,r2);
+        this->setRVector(vr2,r1);
+    }
+
     void output()
     {
         for (unsigned int i = 0; i < r; i++)

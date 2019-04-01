@@ -22,6 +22,8 @@ public:
     TypeCheck(twoMat);
     TypeCheck(vecNum);
     TypeCheck(matNum);
+    TypeCheck(matNum2);
+    TypeCheck(matNum3);
     TypeCheck(matVec);
     TypeCheck(pmatVecNum);
     //内置函数
@@ -55,4 +57,7 @@ public:
     FunBody(inv);
     FunBody(adjoint);
     FunBody(linerSolve);
+    FunBody(rsub);
+    FunBody(rmul);
+    FunBody(rswap);
 };
