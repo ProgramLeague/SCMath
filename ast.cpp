@@ -44,7 +44,7 @@ static void ast::Init()
     addFun(BuiltinFunc::oneMat, BuiltinFunc::det,"det",1);
     addFun(BuiltinFunc::oneMat, BuiltinFunc::inv,"inv",1);
     addFun(BuiltinFunc::oneMat, BuiltinFunc::adjoint,"adjoint",1);
-    addFun(BuiltinFunc::twoMat, BuiltinFunc::linerSolve,"linerSolve",2);
+    addFun(BuiltinFunc::matVec, BuiltinFunc::linerSolve,"linerSolve",2);
     addFun(BuiltinFunc::matNum3,BuiltinFunc::rsub,"rsub",4);
     addFun(BuiltinFunc::matNum2,BuiltinFunc::rmul,"rmul",3);
     addFun(BuiltinFunc::matNum2,BuiltinFunc::rswap,"rswap",3);
