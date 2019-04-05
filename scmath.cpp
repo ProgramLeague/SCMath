@@ -59,11 +59,55 @@ const MathFunc MathFunc::diff(const string &value)
     return retn;
 }
 
+MathFunc& MathFunc::operator=(const string &st)
+{
+    delete funPro;
+    delete funScope;
+    funScope = new Scope(&record::globalScope);
+    stringstream ss;
+    ss << st;
+    string funString;
+    ss >> funString;
+    funPro = ast::toAST(funString, funScope);
+    return *this;
+}
+
+MathFunc& MathFunc::operator=(BasicNode* st)
+{
+    delete funPro;
+    delete funScope;
+    funScope = new Scope(&record::globalScope);
+    stringstream ss;
+    ast::output(st, ss);
+    string funString;
+    ss >> funString;
+    funPro = ast::toAST(funString, funScope);
+    return *this;
+}
+
+MathFunc& MathFunc::operator=(const MathFunc &st)
+{
+    if(this == &st)
+        return *this;
+    delete funPro;
+    delete funScope;
+    funScope = new Scope(&record::globalScope);
+    stringstream ss;
+    ss << st;
+    string funString;
+    ss >> funString;
+    funPro = ast::toAST(funString, funScope);
+    return *this;
+}
+
 ostream& operator<<(ostream &os, const MathFunc &func)
 {
     ast::output(func.funPro, os);
     return os;
 }
+
+
+//-------------------------------------------------------------
 
 void __Simplificate(BasicNode *&now)
 {

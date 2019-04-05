@@ -9,7 +9,7 @@ using namespace ast;
 int main()
 {
     string testString = "a+b-c*d/e+f^g-2^a";
-    MathFunc test(testString);
+    MathFunc test = testString;
     cout << test.diff("a") << endl;
     cout << test.diff("c") << endl;
     cout << test.diff("e") << endl;
