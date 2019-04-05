@@ -70,6 +70,11 @@ bool ast::isBinOp(const char &c)
     return c == '+' || c == '-' || c == '*' || c == '/' || c == '^' || c=='=';
 }
 
+bool ast::isBinOp(const string &c)
+{
+    return c == "+" || c == "-" || c == "*" || c == "/" || c == "^" || c=="=";
+}
+
 bool ast::isLetter(const char &c)
 {
     return (c >= 'A' && c <='Z') || (c >= 'a' && c <= 'z');
@@ -81,7 +86,7 @@ bool ast::canpush(stack<string> &stackOp, const string& op)
     return BinOpPriority[op] > BinOpPriority[stackOp.top()];
 }
 
-BasicNode* ast::__ToAST(string &s, Scope* sc)
+BasicNode* ast::__toAST(string &s, Scope* sc)
 {
     s += LowestPriority;
     stack<BasicNode*> stackAST;
@@ -129,7 +134,7 @@ BasicNode* ast::__ToAST(string &s, Scope* sc)
                     j++;
                     if(j < n && (s[j] == ','|| s[j] == ')') && countleftParenthesis == 1)
                     {
-                        node->addNode(__ToAST(temp = s.substr(i + 1, j - i - 1), sc));
+                        node->addNode(__toAST(temp = s.substr(i + 1, j - i - 1), sc));
                         if(s[j]==')') countleftParenthesis--;
                         i=j;
                     }
@@ -173,12 +178,12 @@ BasicNode* ast::__ToAST(string &s, Scope* sc)
             }
             if(s[j] == ')')
             {
-                stackAST.push(__ToAST(temp = s.substr(i + 1, j - i - 1), sc));//为了让参数1变为左值
+                stackAST.push(__toAST(temp = s.substr(i + 1, j - i - 1), sc));//为了让参数1变为左值
                 i = j + 1;//+1是要过掉‘)’
             }
             else//读到了字符串尾还是没有右括号
             {
-                stackAST.push(__ToAST(temp = s.substr(i + 1, j - i - 2), sc));
+                stackAST.push(__toAST(temp = s.substr(i + 1, j - i - 2), sc));
                 i = j - 1;//应该忽略掉字符串结尾的$，便于下面判断是否能进stackOp
             }
         }
@@ -216,7 +221,7 @@ BasicNode* ast::__ToAST(string &s, Scope* sc)
     return stackAST.top();
 }
 
-BasicNode* ast::ToAST(string s, Scope* sc){
+BasicNode* ast::toAST(string s, Scope* sc){
     if(!isInit){
         Init();
         isInit = true;
@@ -227,5 +232,94 @@ BasicNode* ast::ToAST(string s, Scope* sc){
             c--;
         }
     }
-    return __ToAST(s, sc);
+    return __toAST(s, sc);
+}
+
+
+
+void ast::__output(BasicNode* now, ostream &os, const string& FatherOP)
+{
+    if(now->getType() == Num)
+    {
+        double nownum = ((NumNode*)now)->getNum();
+        if(nownum < 0)
+            os << '(' << nownum << ')';
+        else
+            os << nownum;
+        return;
+    }
+
+    if(now->getType() == Fun)
+    {
+        FunNode* t = (FunNode*)now;
+        string op = t->getEntity()->NAME;
+        if(isBinOp(op))
+        {
+            if(ast::BinOpPriority[op] < ast::BinOpPriority[FatherOP])
+                os << '(';
+            __output(t->sonNode[0], os, op);
+            os << op;
+            if(op == "-" && t->sonNode[1]->getType() == Fun && ast::BinOpPriority[op] == ast::BinOpPriority[((FunNode*)(t->sonNode[1]))->getEntity()->NAME])
+                os << '(';
+            __output(t->sonNode[1], os, op);
+            if(ast::BinOpPriority[op] < ast::BinOpPriority[FatherOP])
+                os << ')';
+            if(op == "-" && t->sonNode[1]->getType() == Fun && ast::BinOpPriority[op] == ast::BinOpPriority[((FunNode*)(t->sonNode[1]))->getEntity()->NAME])
+                os << ')';
+            return;
+        }
+        os << op << '(';
+        int n = t->getEntity()->getParnum();
+        for(int i = 0 ; i < n; i++)
+        {
+            __output(t->sonNode[i], os);
+            if(i != n - 1)
+                os << ",";
+        }
+        os << ')';
+        return;
+    }
+
+    if(now->getType() == Var)
+    {
+        os << ((VarNode*)now)->NAME;
+    }
+
+    if(now->getType()==Matrix)
+        ((matrixNode*)now)->output(os);
+
+    if(now->getType()==Vector)
+        ((vectorNode*)now)->output(os);
+
+    if(now->getType()==Null)
+        return;
+}
+
+void ast::output(BasicNode *now, ostream &os)
+{
+    __output(now, os);;
+}
+
+void ast::outputASTstruct(BasicNode* now, int depth)//方便输出AST结构(并没有找到别的好方法)
+{
+    for(int i = 0; i < depth; i++)
+        cout << ' ';
+    if(now->getType() == Num)
+    {
+        cout << ((NumNode*)now)->getNum() << endl;
+        return;
+    }
+    if(now->getType() == Var)
+    {
+        cout << ((VarNode*)now)->NAME << endl;
+        return;
+    }
+    if(now->getType() == Fun)
+    {
+        FunNode* temp = (FunNode*)now;
+        int n = temp->getEntity()->getParnum();
+        cout << temp->getEntity()->NAME << endl;
+        for(int i = 0; i < n; i++)
+            outputASTstruct(temp->sonNode[i], depth+1);;
+    }
 }

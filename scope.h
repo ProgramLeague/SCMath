@@ -17,8 +17,8 @@ public:
     Variable* addVariable(string name);
     void addVariable(string name,Variable* var);
     void addFunction(string name,Function* fun);
-    Variable* findVariable(string name, bool thisScope=true);
-    Function* findFunction(string name,bool thisScope=true);
+    Variable* findVariable(string name, bool thisScope=false);
+    Function* findFunction(string name,bool thisScope=false);
     //直接删除实体，在已经将所有实体引用在树中清空时使用（目前还没看到有什么用）
     //void deleteVariable(string name);
     //void deleteFunction(string name);

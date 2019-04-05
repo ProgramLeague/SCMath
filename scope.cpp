@@ -75,36 +75,38 @@ void Scope::deleteFunction(Function *fun)
 
 Variable* Scope::findVariable(string name,bool thisScope)
 {
-    Variable* result=this->variableList[name];
+    //冷漠：variableList[name]会在variablList里面创建一个空的name
+    Variable* result = nullptr;
 
-    if(result==0)
-        result=nullptr;
+    if(variableList.count(name))
+        result = variableList[name];
+
+    if(result != nullptr)
+        return result;
 
     if(thisScope)
         return result;
-    else
-    {
-        if(result==nullptr)
-            return nullptr;
-        else
-            return this->fatherScope->findVariable(name,false);
-    }
+
+    if(fatherScope == nullptr)
+        return nullptr;
+
+    return this->fatherScope->findVariable(name,false);
 }
 
 Function* Scope::findFunction(string name,bool thisScope)
 {
-    Function* result=this->functionList[name];
+    Function* result = nullptr;
 
-    if(result==0)
-        result=nullptr;
+    if(functionList.count(name))
+        result = functionList[name];
+
+    if(result != nullptr)
+        return result;
 
     if(thisScope)
         return result;
-    else
-    {
-        if(result==nullptr)
-            return nullptr;
-        else
-            return this->fatherScope->findFunction(name,false);
-    }
+    if(fatherScope == nullptr)
+        return nullptr;
+
+    return this->fatherScope->findFunction(name,false);
 }

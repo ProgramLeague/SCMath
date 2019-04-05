@@ -1,5 +1,6 @@
 #pragma once
 #include "nodetype.h"
+#include<iostream>
 #include <math.h>
 using namespace std;
 
@@ -67,13 +68,13 @@ public:
         }
     }
 
-    void output()
+    void output(ostream &os)
     {
         for (unsigned int i = 0; i < l; i++)
         {
-            printf("%g ", v[i]);
+            os << v[i];
         }
-        printf("\n");
+        os << endl;
     }
 
     ~vectorNode() { delete[]v; }
@@ -307,15 +308,15 @@ public:
         this->setRVector(vr2,r1);
     }
 
-    void output()
+    void output(ostream &os = cout)
     {
         for (unsigned int i = 0; i < r; i++)
         {
             for (unsigned int j = 0; j < c; j++)
             {
-                printf("%g ", m[i][j]);
+                os << m[i][j];
             }
-            printf("\n\t");
+            os << "\n\t";
         }
     }
 
