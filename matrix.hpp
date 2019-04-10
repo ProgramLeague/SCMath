@@ -78,7 +78,7 @@ public:
     }
 
     ~vectorNode() { delete[]v; }
-    unsigned int getl() { return l; }
+    unsigned int getl() const { return l; }
 };
 
 
@@ -136,8 +136,8 @@ public:
         delete[] m;
     }
 
-    unsigned int getr() { return r; }
-    unsigned int getc() { return c; }
+    unsigned int getr() const { return r; }
+    unsigned int getc() const { return c; }
 
     vectorNode getRVector(unsigned int rn)
     {

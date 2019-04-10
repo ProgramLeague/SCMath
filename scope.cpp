@@ -57,19 +57,25 @@ void Scope::deleteVariable(string name)
 
 void Scope::deleteVariable(Variable *var)
 {
-    for(auto p:this->variableList)
+    auto p = variableList.begin();
+    while(p != variableList.end())
     {
-        if(p.second==var)
-            this->variableList.erase(p.first);
+        if(p->second == var)
+            variableList.erase(p++);
+        else
+            p++;
     }
 }
 
 void Scope::deleteFunction(Function *fun)
 {
-    for(auto p:this->functionList)
+    auto p = functionList.begin();
+    while(p != functionList.end())
     {
-        if(p.second==fun)
-            this->functionList.erase(p.first);
+        if(p->second == fun)
+            functionList.erase(p++);
+        else
+            p++;
     }
 }
 

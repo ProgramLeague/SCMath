@@ -1,8 +1,14 @@
-#include "scmath.h"
+﻿#include "scmath.h"
 
-MathFunc::MathFunc(BasicNode *func)
+MathFunc::MathFunc(BasicNode *func, Scope *sc)
 {
-    funScope = new Scope(&record::globalScope);
+    if(sc == nullptr)
+        funScope = new Scope(&record::globalScope);
+    else
+    {
+        funScope = sc;
+        ownerScope = false;
+    }
     stringstream ss;
     ast::output(func, ss);
     string funString;
@@ -10,15 +16,27 @@ MathFunc::MathFunc(BasicNode *func)
     funPro = ast::toAST(funString, funScope);
 }
 
-MathFunc::MathFunc(const string &func)
+MathFunc::MathFunc(const string &func, Scope *sc)
 {
-    funScope = new Scope(&record::globalScope);
+    if(sc == nullptr)
+        funScope = new Scope(&record::globalScope);
+    else
+    {
+        funScope = sc;
+        ownerScope = false;
+    }
     funPro = ast::toAST(func, funScope);
 }
 
-MathFunc::MathFunc(const MathFunc &func)
+MathFunc::MathFunc(const MathFunc &func, Scope *sc)
 {
-    funScope = new Scope(&record::globalScope);
+    if(sc == nullptr)
+        funScope = new Scope(&record::globalScope);
+    else
+    {
+        funScope = sc;
+        ownerScope = false;
+    }
     stringstream ss;
     ss << func;
     string funString;
@@ -29,7 +47,8 @@ MathFunc::MathFunc(const MathFunc &func)
 MathFunc::~MathFunc()
 {
     delete funPro;
-    delete funScope;
+    if(ownerScope)
+        delete funScope;
 }
 
 void MathFunc::setVal(const string &value, BasicNode *num)
@@ -46,9 +65,49 @@ void MathFunc::setVal(const string &value, const double &num)
     funScope->findVariable(value, true)->setVal(new NumNode(num));
 }
 
+void MathFunc::changeScope(Scope *sc)
+{
+    stringstream ss;
+    ss << *this;
+    string fun;
+    ss >> fun;
+    delete funPro;
+    if(ownerScope)
+        delete funScope;
+    if(sc == nullptr)
+    {
+        funScope = new Scope(&record::globalScope);
+        ownerScope = true;
+    }
+    else
+    {
+        funScope = sc;
+        ownerScope = false;
+    }
+    funPro = ast::toAST(fun, funScope);
+}
+
 const MathFunc MathFunc::eval()
 {
-   return MathFunc(funPro->eval());
+    BasicNode *p = copyHelp::copyNode(funPro);
+    MathFunc retn(funPro->eval());
+    delete funPro;
+    funPro = p;
+   return retn;
+}
+
+double MathFunc::getNum()
+{
+    BasicNode *t = copyHelp::copyNode(funPro);
+    BasicNode *p = funPro->eval();
+    if(p->getType() != Num)
+        throw string("有变量未赋值");
+    //cout << ((NumNode*)p)->getNum() << endl;
+    double retn = ((NumNode*)p)->getNum();
+    delete funPro;
+    //delete p;
+    funPro = t;
+    return retn;
 }
 
 const MathFunc MathFunc::diff(const string &value)
@@ -57,6 +116,11 @@ const MathFunc MathFunc::diff(const string &value)
     MathFunc retn(result);
     delete result;
     return retn;
+}
+
+const ValWeight MathFunc::regress(const DataSet &data, const VarSet var, int n)
+{
+    return regression(funPro, data, var, n);
 }
 
 MathFunc& MathFunc::operator=(const string &st)
@@ -351,4 +415,72 @@ BasicNode* Derivation(BasicNode *now, const string &value){
     BasicNode *retn = __Derivation(now, value);
     __Simplificate(retn);
     return retn;
+}
+
+const ValWeight regression(BasicNode *func, const DataSet &data, const VarSet var, int n)
+{
+    //参数分别为 目标函数，数据，要回归的变量，迭代次数
+    //数据最后一列为函数值
+    if(data.getr() != var.size() + 1)
+        throw string("维度不对");
+    ValWeight weight;
+    unique_ptr<Scope> sc(new Scope(&record::globalScope)) ;
+    map<string, MathFunc> grad;
+
+    stack<BasicNode*> te;
+    te.push(func);
+    while(!te.empty())
+    {
+        BasicNode *t = te.top();
+        te.pop();
+        if(t->getType() == Var)
+        {
+            string name = ((VarNode*)t)->NAME;
+            if(weight.count(name) == 0)
+            {
+                for(auto &i : var)
+                    if(i == name)
+                        goto lable;
+                weight[name] = 1.0;
+            }
+        }
+        if(t->getType() == Fun)
+        {
+            FunNode *temp = (FunNode*)t;
+            for(auto &i :temp->sonNode)
+                te.push(i);
+        }
+        lable:;
+    }
+
+    string IndependentValue = (*(weight.rbegin())).first + "y";//防止重名
+    stringstream ss;
+    ast::output(func, ss);
+    string tfunc;
+    ss >> tfunc;
+    string tloss = "(" + tfunc + "-" + IndependentValue + ")^2";
+    MathFunc loss = tloss;
+    loss.changeScope(sc.get());
+    for(auto i : weight)
+    {
+        grad[i.first] = loss.diff(i.first);
+        grad[i.first].changeScope(loss.getScope());
+        //cout <<i.first << '\t' << grad[i.first] << endl;
+    }
+
+    for(int time = 0; time < n; time++)//第time次遍历
+    {
+        for(int i = 0; i < data.getc(); i++)//对于每个数据
+        {
+            double alpha = 0.01;
+            for(int p = 0; p < var.size(); p++)//把数据点放到函数里面
+                loss.setVal(var[p], data.m[i][p]);
+            loss.setVal(IndependentValue, data.m[i][data.getr() - 1]);
+            for(auto &p : weight)//把目前的权放到函数里面
+                loss.setVal(p.first, p.second);
+            for(auto &p : weight)//每个变量
+                p.second -= alpha * grad[p.first].getNum();
+        }
+    }
+    return weight;
 }
