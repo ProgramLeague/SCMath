@@ -214,7 +214,7 @@ BasicNode* ast::__toAST(string &s, Scope* sc)
         }
         else
         {
-            throw string("Error string");
+            throw Excep("Error string");
         }
 
     }
