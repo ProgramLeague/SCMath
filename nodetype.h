@@ -102,6 +102,9 @@ public:
 #ifdef READABLEGEN
     string NAME;
 #endif
+#ifdef PARTEVAL
+    bool giveupEval; //如果该变量为赋值，暂时放弃对此节点的求值
+#endif
 };
 typedef VarNode Variable; //内存实体是Variable，其指针才作为节点（不像某些节点一样是遇到一个就new一次），参考函数实体和函数节点的思想
 
@@ -247,27 +250,27 @@ public:
 class IfNode : public conditionalControlNode
 {
 protected:
-    ProNode* truePro;
-    ProNode* falsePro;
+    BasicNode* truePro;
+    BasicNode* falsePro;
 public:
     virtual int getType() {return If;}
     virtual void addNode(BasicNode*) {throw addSonExcep(If);}
     virtual BasicNode* eval();
     IfNode(const IfNode& n);
-    IfNode(BasicNode* condition,ProNode* truePro,ProNode* falsePro):conditionalControlNode(condition),truePro(truePro),falsePro(falsePro){}
+    IfNode(BasicNode* condition,BasicNode* truePro,BasicNode* falsePro):conditionalControlNode(condition),truePro(truePro),falsePro(falsePro){}
     virtual ~IfNode();
 };
 
 class WhileNode : public conditionalControlNode
 {
 protected:
-    ProNode* body;
+    BasicNode* body;
 public:
     virtual int getType() {return While;}
     virtual void addNode(BasicNode*) {throw addSonExcep(While);}
     virtual BasicNode* eval(); //该类的eval不求值（返回NullNode），只通过循环本身产生副作用
     WhileNode(const WhileNode& n);
-    WhileNode(BasicNode* condition,ProNode* body):conditionalControlNode(condition),body(body){}
+    WhileNode(BasicNode* condition,BasicNode* body):conditionalControlNode(condition),body(body){}
     virtual ~WhileNode();
 };
 

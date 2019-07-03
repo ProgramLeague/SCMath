@@ -17,20 +17,20 @@ public:
 
 namespace ast
 {
-    static const char LowestPriority = '$';
+    static const char cLowestPriority = ';';
+    static const string sLowestPriority = ";";
     extern bool isInit;
     extern map<string,int> BinOpPriority;
 
-    static void Init();
-    static bool canpush(stack<string> &, const string &);
-    static bool isNum(const char &);
-    static bool isBinOp(const char &);
-    static bool isBinOp(const string &);
-    static bool isLetter(const char &);
-    static BasicNode* __toAST(string &, Scope*);
-    static void __output(BasicNode*, ostream &, const string& = string(ast::LowestPriority, 1));
+    void Init();
+    bool canpush(stack<string> &, const string &);
+    bool isNum(const char &);
+    bool isBinOp(const char &);
+    bool isBinOp(const string &);
+    bool isLetter(const char &);
+    BasicNode* __toAST(string &, Scope*);
+    void __output(BasicNode*, ostream &, const string& = sLowestPriority);
 
     void output(BasicNode*, ostream & = cout);
-    void outputASTstruct(BasicNode*, int = 0);
     BasicNode* toAST(string, Scope* = &record::globalScope);
 }

@@ -123,7 +123,11 @@ void VarNode::setVarVal(VarNode *node)
 BasicNode* VarNode::eval()
 {
     if(this->isEmpty())
-        throw unassignedEvalExcep();
+        this->giveupEval = true;
+    else
+        this->giveupEval = false;
+    if(this->giveupEval)
+        return copyHelp::copyNode(this);
     else
     {
         if(copyHelp::isLiteral(this->val))
@@ -211,32 +215,29 @@ void FunNode::addNode(BasicNode *node)
 
 BasicNode* FunNode::eval()
 {
-#ifdef PARTEVAL
     this->giveupEval=false;
-#endif
-
-    if(this->funEntity==nullptr)
-        throw Excep("funEntity is null");
-
-#ifdef PARTEVAL
-    try
-    {
-#endif
-        return this->funEntity->eval(this->sonNode);
+    vector<BasicNode*> var;
+    BasicNode* result;
+    for(auto i:sonNode){
+        var.push_back(i->eval());
+        if(i->getType() == Fun && ((FunNode*)i)->giveupEval)
+            this->giveupEval = true;
+        if(i->getType() == Var && ((VarNode*)i)->giveupEval)
+            this->giveupEval = true;
     }
-#ifdef PARTEVAL
-    catch(callCheckMismatchExcep e) //因为未赋值变量未求值使得参数类型不匹配，放弃对这个函数求值
-            //控制流节点对条件的求值会在此处进行，该节点放弃求值会被上层控制流节点检查到，控制流节点也会放弃求值
-    {
-        if(e.getType()==TypeMisMatch)
-        {
-            this->giveupEval=true;
-            return this;
+    if(!this->giveupEval){
+        result = this->getEntity()->eval(var);
+        for(auto& i:var){
+            delete i;
+            i = nullptr;
         }
-        else
-            throw e;
     }
-#endif
+    else {
+        result = new FunNode(this->getEntity());
+        for(auto i:var)
+            result->addNode(i);
+    }
+    return result;
 }
 
 #ifdef PARTEVAL
@@ -405,8 +406,11 @@ BasicNode* IfNode::eval()
     if(recon->getType()!=Num)
         throw Excep("IfNode condition value's type mismatch");
     BasicNode* result;
-    if(dynamic_cast<NumNode*>(recon)->getNum()==0) //这里判断false
-        result=this->falsePro->eval();
+    if(dynamic_cast<NumNode*>(recon)->getNum()==0)
+    {//这里判断false
+        if(this->falsePro!= nullptr)
+            result=this->falsePro->eval();
+    }
     else
         result=this->truePro->eval();
 
@@ -423,7 +427,7 @@ IfNode::~IfNode()
 
 BasicNode* WhileNode::eval()
 {
-    ProNode* execpro;
+    BasicNode* execpro;
     while(1)
     {
         BasicNode* recon;
@@ -447,7 +451,7 @@ BasicNode* WhileNode::eval()
             throw Excep("WhileNode condition value's type mismatch");
         if(dynamic_cast<NumNode*>(recon)->getNum()==1) //为真继续循环
         {
-            execpro=new ProNode(*this->body);
+            execpro=copyHelp::copyNode(this->body);
             execpro->eval();
             delete execpro;
         }

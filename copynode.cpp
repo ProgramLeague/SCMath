@@ -59,14 +59,14 @@ BasicNode::BasicNode(const BasicNode &n)
 IfNode::IfNode(const IfNode &n):conditionalControlNode(n)
 {
     this->condition=copyHelp::copyNode(n.condition);
-    this->truePro=new ProNode(*(n.truePro));
-    this->falsePro=new ProNode(*(n.falsePro));
+    this->truePro=copyHelp::copyNode(n.truePro);
+    this->falsePro=copyHelp::copyNode(n.falsePro);
 }
 
 WhileNode::WhileNode(const WhileNode &n):conditionalControlNode(n)
 {
     this->condition=copyHelp::copyNode(n.condition);
-    this->body=new ProNode(*(n.body));
+    this->body=copyHelp::copyNode(n.body);
 }
 
 VarNode::VarNode(VarNode &n):BasicNode(n)

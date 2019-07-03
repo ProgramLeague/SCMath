@@ -243,7 +243,7 @@ void __Simplificate(BasicNode *&now)
     if(tempNow->getEntity()->NAME == "+")//加法某个树为0
     {
         for(int i = 0; i <= 1; i++){
-            if(tempNow->sonNode[i]->getType() == Num && ((NumNode*)(tempNow->sonNode[i]))->getNum() == 0){
+            if(tempNow->sonNode[i]->getType() == Num && ((NumNode*)(tempNow->sonNode[i]))->getNum() == 0.0){
                 BasicNode* newnow = copyHelp::copyNode(tempNow->sonNode[i ^ 1]);
                 delete now;
                 now = newnow;
@@ -255,7 +255,7 @@ void __Simplificate(BasicNode *&now)
     if(tempNow->getEntity()->NAME == "*")//乘法某个树为1
     {
         for(int i = 0; i <= 1; i++){
-            if(tempNow->sonNode[i]->getType() == Num && ((NumNode*)(tempNow->sonNode[i]))->getNum() == 1){
+            if(tempNow->sonNode[i]->getType() == Num && ((NumNode*)(tempNow->sonNode[i]))->getNum() == 1.0){
                 BasicNode* newnow = copyHelp::copyNode(tempNow->sonNode[i ^ 1]);
                 delete now;
                 now = newnow;
@@ -266,7 +266,7 @@ void __Simplificate(BasicNode *&now)
     if(tempNow->getEntity()->NAME == "*")//乘法某个树为0
     {
         for(int i = 0; i <= 1; i++){
-            if(tempNow->sonNode[i]->getType() == Num && ((NumNode*)(tempNow->sonNode[i]))->getNum() == 0){
+            if(tempNow->sonNode[i]->getType() == Num && ((NumNode*)(tempNow->sonNode[i]))->getNum() == 0.0){
                 BasicNode* newnow = new NumNode(0);
                 delete now;
                 now = newnow;
@@ -277,7 +277,7 @@ void __Simplificate(BasicNode *&now)
 
     if(tempNow->getEntity()->NAME == "-")//减法右树为0
     {
-        if(tempNow->sonNode[1]->getType() == Num && ((NumNode*)(tempNow->sonNode[1]))->getNum() == 0){
+        if(tempNow->sonNode[1]->getType() == Num && ((NumNode*)(tempNow->sonNode[1]))->getNum() == 0.0){
             BasicNode* newnow = copyHelp::copyNode(tempNow->sonNode[0]);
             delete now;
             now = newnow;
@@ -287,7 +287,7 @@ void __Simplificate(BasicNode *&now)
 
     if(tempNow->getEntity()->NAME == "-")//减法左树为0
     {
-        if(tempNow->sonNode[1]->getType() == Num && ((NumNode*)(tempNow->sonNode[0]))->getNum() == 0){
+        if(tempNow->sonNode[1]->getType() == Num && ((NumNode*)(tempNow->sonNode[0]))->getNum() == 0.0){
             BasicNode* newnow = new FunNode(record::globalScope.functionList["*"]);
             BasicNode* newnowson = copyHelp::copyNode(tempNow->sonNode[1]);
             newnow->addNode(new NumNode(-1));
@@ -300,7 +300,7 @@ void __Simplificate(BasicNode *&now)
 
     if(tempNow->getEntity()->NAME == "/")//除法左树为0
     {
-        if(tempNow->sonNode[0]->getType() == Num && ((NumNode*)(tempNow->sonNode[0]))->getNum() == 0){
+        if(tempNow->sonNode[0]->getType() == Num && ((NumNode*)(tempNow->sonNode[0]))->getNum() == 0.0){
             BasicNode* newnow = new NumNode(0);
             delete now;
             now = newnow;
@@ -409,6 +409,7 @@ BasicNode* __Derivation(BasicNode* now, const string &value){
     }
 
     //warn:其它函数还没有写
+    return nullptr;
 }
 
 BasicNode* Derivation(BasicNode *now, const string &value){
