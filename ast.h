@@ -18,7 +18,8 @@ public:
 namespace ast
 {
     static const char cLowestPriority = ';';
-    static const string sLowestPriority = ";";
+    static const string sLowestPriority = ";";//字符串结尾
+    static const char cReturnFlag = '$';//返回值标记
     extern bool isInit;
     extern map<string,int> BinOpPriority;
 

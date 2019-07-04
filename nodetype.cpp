@@ -252,40 +252,9 @@ bool isNotGiveupEval(BasicNode* node)
 }
 #endif
 
-void recursionEval(BasicNode* &node)
-{
-    if(copyHelp::isLiteral(node))
-        return; //如果是字面量，自己就是求值结果，下面再重新赋值一次就重复了
-    else
-    {
-        BasicNode* result;
-#ifdef PARTEVAL
-        try
-        {
-#endif
-            result=node->eval();
-#ifdef PARTEVAL
-        }
-        catch(unassignedEvalExcep) //对未赋值变量求值，保持原样
-        {result=node;}
-#endif
-
-        if(node->getType()!=Var&&node->getType()!=VarRef)
-#ifdef PARTEVAL
-            if(isNotGiveupEval(node)) //对放弃求值的节点，不进行删除
-#endif
-                delete node;
-        node=result; //节点的替换在这里（父节点）完成，子节点只需要返回即可
-        //对于已经赋值的变量，整体过程是用值替代本身变量在AST中的位置，不过变量本身并没有被析构，因为变量的所有权在scope（后面可能还要访问）
-    }
-}
 
 BasicNode* Function::eval(vector<BasicNode*> &sonNode)
 {
-    //对所有参数求值
-    for(BasicNode* &node:sonNode)
-        recursionEval(node);
-
     //函数求值
     if(this->iscanBE) //基础求值模式
     {
@@ -341,17 +310,14 @@ void Function::bindArgument(vector<BasicNode *> &sonNode)
 BasicNode* ProNode::eval()
 {
     vector<BasicNode*>&body=this->sonNode;
-    for(unsigned int i=0;i<body.size()-1;i++) //最后一个可能是返回值，先留着后面单独处理
+    for(unsigned int i=0;i<body.size();i++) //最后一个可能是返回值，先留着后面单独处理
     {
-        recursionEval(body.at(i));
+        BasicNode* t = body.at(i)->eval();
         if(body.at(i)->isRet())
-            return body.at(i);
+            return t;
+        delete t;
     }
-    //前面都不是返回值，最后一个是
-    BasicNode* lastnode=body.at(body.size()-1);
-    if(lastnode->getType()!=Null)
-        recursionEval(lastnode);
-    return lastnode;
+    return new nullNode();
 }
 
 

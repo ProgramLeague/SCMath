@@ -152,7 +152,8 @@ BasicNode* ast::__toAST(string &inputstring, Scope* sc)
         {
             input.push_back(inputstring.substr(0, i));
             inputstring = inputstring.substr(i + 1);
-
+            i = 0;
+            n = inputstring.size();
         }
         if (i == n - 1)
             input.push_back(inputstring);
@@ -162,9 +163,16 @@ BasicNode* ast::__toAST(string &inputstring, Scope* sc)
         s += cLowestPriority;
         stack<BasicNode*> stackAST;
         stack<string> stackOp;
-        string::size_type n = s.size();
+        string::size_type n = s.size(), i = 0;
+        bool ReturnFlag = false;
 
-        for (string::size_type i = 0; i < n; i++)
+        if (s[0] == cReturnFlag)
+        {
+            ReturnFlag = true;
+            i++;
+        }
+
+        for (; i < n; i++)
         {
             string temp;
             string::size_type j = i;
@@ -366,7 +374,12 @@ BasicNode* ast::__toAST(string &inputstring, Scope* sc)
 
         }
         if (!stackAST.empty())
-            output.push_back(stackAST.top());
+        {
+            BasicNode* r = stackAST.top();
+            if (ReturnFlag)
+                r->setRet();
+            output.push_back(r);
+        }
     }
     if (output.size() == 0)
         return new nullNode();
