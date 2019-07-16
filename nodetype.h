@@ -189,17 +189,17 @@ private:
     BE BEfun;
     bool iscanBE=false;
     //关于pro求值
-    ProNode* body=nullptr; //是ret节点返回，最后一个元素视为返回值（如果没有填nullNode）（fix:这个ret路子可能是错的）
+    BasicNode* body=nullptr; //是ret节点返回，最后一个元素视为返回值（如果没有填nullNode）（fix:这个ret路子可能是错的）
     vector<VarReference*>argumentList; //形参列表，持有所有权。（warn:用了这种方法将很难并行化，一个函数实体同时只能被一组实参占用）
     void unbindArgument();
     void bindArgument(vector<BasicNode*>&sonNode);
 public:
-    Function(ProNode* body,int parnum=-1):parnum(parnum),body(body){} //普通函数（有函数体）
+    Function(BasicNode* body,int parnum=-1):parnum(parnum),body(body){} //普通函数（有函数体）
     Function(canBE canBEfun,BE BEfun,int parnum=-1):
         parnum(parnum),canBEfun(canBEfun),BEfun(BEfun),iscanBE(true){} //调用到函数接口
     ~Function();
 
-    ProNode* getFunBody() {return this->body;}
+    BasicNode* getFunBody() {return this->body;}
     int getParnum() {return this->parnum;}
     bool isVLP() {return this->parnum==-1;}
     void addArgument(VarReference* var); //先在外面new好，然后转移所有权进来
@@ -225,7 +225,7 @@ public:
     bool haveEntity() {return this->funEntity!=nullptr;}
     void setEntity(Function* funEntity) {this->funEntity=funEntity;}
     Function* getEntity(){return this->funEntity;}
-    ProNode* getFunBody() {return this->funEntity->getFunBody();}
+    BasicNode* getFunBody() {return this->funEntity->getFunBody();}
 
 #ifdef PARTEVAL
     bool giveupEval; //如果里边有符号变量，暂时放弃对此节点（基本为函数节点）的求值，并在此做标记防止根函数节点被视为求值结束而delete

@@ -266,7 +266,7 @@ BasicNode* Function::eval(vector<BasicNode*> &sonNode)
     else //不能基础求值就是正常有函数体Pro的
     {
         this->bindArgument(sonNode); //子节点绑定到实参
-        ProNode* execpro=new ProNode(*this->body); //执行复制那个，防止函数体求值时被破坏
+        BasicNode* execpro=copyHelp::copyNode(this->body); //执行复制那个，防止函数体求值时被破坏
         BasicNode* result=execpro->eval();
         delete execpro;
         this->unbindArgument();
