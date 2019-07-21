@@ -27,6 +27,12 @@ bool BuiltinFunc::assignmentCheck(vector<BasicNode *> &sonNode)
         return false;
 }
 
+bool BuiltinFunc::onestr(vector<BasicNode *> &sonNode)
+
+{
+    return sonNode.at(0)->getType() == String;
+}
+
 bool BuiltinFunc::oneMat(vector<BasicNode *> &sonNode)
 {
     return sonNode.at(0)->getType() == Matrix;
@@ -124,6 +130,12 @@ BasicNode* BuiltinFunc::log(vector<BasicNode *> &sonNode)
 BasicNode* BuiltinFunc::ln(vector<BasicNode *> &sonNode)
 {
     return new NumNode(std::log(BuiltinFunc::getNum(sonNode[0])));
+}
+
+BasicNode* BuiltinFunc::puts(vector<BasicNode *> &sonNode)
+{
+    cout << ((StringNode*)sonNode[0])->getStr();
+    return new nullNode();
 }
 
 BasicNode* BuiltinFunc::vecDot(vector<BasicNode *> &sonNode)

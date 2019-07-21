@@ -8,9 +8,12 @@ using namespace ast;
 
 int main()
 {
-    string testString = "1 + if(1){1+1;$2+2}else{3}";
-    BasicNode* a = toAST(testString);
-    output(a->eval(),cout);
+    string s = "while(1){puts(\"a\")}";
+    BasicNode* a = toAST(s);
+    BasicNode* b = a->eval();
+    cout << a << endl;
+    delete a;
+    delete b;
     return 0;
 }
 /*

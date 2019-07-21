@@ -16,7 +16,7 @@ public:
     TypeCheck(hasOneSonNode);
     TypeCheck(hasTwoSonNodes);
     TypeCheck(assignmentCheck);
-
+    TypeCheck(onestr);
     TypeCheck(oneMat);
     TypeCheck(twoVec);
     TypeCheck(twoMat);
@@ -38,6 +38,8 @@ public:
 
     FunBody(log);
     FunBody(ln);
+
+    FunBody(puts);
 
     FunBody(assignment);
 

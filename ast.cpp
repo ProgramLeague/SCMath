@@ -6,6 +6,7 @@ using namespace ast;
 Scope record::globalScope;
 bool ast::isInit = false;
 map<string,int> ast::BinOpPriority;
+map<int, bool> ast::BinOpCombination;
 
 void addFun(canBE canBEfun,BE BEfun,string name,int parnum=-1)
 {
@@ -48,16 +49,24 @@ void ast::Init()
     addFun(BuiltinFunc::matNum3,BuiltinFunc::rsub,"rsub",4);
     addFun(BuiltinFunc::matNum2,BuiltinFunc::rmul,"rmul",3);
     addFun(BuiltinFunc::matNum2,BuiltinFunc::rswap,"rswap",3);
+    addFun(BuiltinFunc::onestr,BuiltinFunc::puts,"puts",1);
 
     //Function* entity=runtime::globalScope.functionList["+"]; //在parse阶段，可以这样从函数域中找到函数名对应的函数实体
     //FunNode* testNode=new FunNode(entity); //然后这样通过函数实体创建相应的函数节点
-    BinOpPriority["$"] =0;
-    BinOpPriority["="] =1;
-    BinOpPriority["+"] =10;
-    BinOpPriority["-"] =10;
-    BinOpPriority["*"] =20;
-    BinOpPriority["/"] =20;
-    BinOpPriority["^"] =30;
+    BinOpPriority[sLowestPriority] = 0;
+    BinOpPriority["="] = 10;
+    BinOpPriority["+"] = 20;
+    BinOpPriority["-"] = 20;
+    BinOpPriority["*"] = 30;
+    BinOpPriority["/"] = 30;
+    BinOpPriority["^"] = 40;
+
+    //结合性false代表从右向左，true代表从左向右
+    BinOpCombination[0] = true;
+    BinOpCombination[10] = false;
+    BinOpCombination[20] = true;
+    BinOpCombination[30] = true;
+    BinOpCombination[40] = true;
 }
 
 bool ast::isNum(const char &c)
@@ -86,81 +95,55 @@ bool ast::canpush(stack<string> &stackOp, const string& op)
     return BinOpPriority[op] > BinOpPriority[stackOp.top()];
 }
 
+int ast::StringToType(const string& s)
+{
+    if (s == "num") return Num;
+    if (s == "string") return String;
+    return Null;
+}
+
 BasicNode* ast::__toAST(string &inputstring, Scope* sc)
 {
-        vector<string> input;
-            vector<BasicNode*> output;
-            string::size_type n = inputstring.size();
+    vector<string> input;
+    vector<BasicNode*> output;
+    string::size_type n = inputstring.size();
 
-            for (string::size_type i = 0; i < n; i++)
+    for (string::size_type i = 0; i < n; i++)
+    {
+        //按照分号把输入拆成几句话
+        //注意：if和while体中的分号应该忽略掉
+        if (inputstring[i] == '\"')
+        {
+            i++;
+            while (i < inputstring.size() && inputstring[i] != '\"')
             {
-                //按照分号把输入拆成几句话
-                //注意：if和while体中的分号应该忽略掉
-                if (inputstring[i] == '\"')
-                {
+                i++;
+                if(i < n && inputstring[i] == '\\')
                     i++;
-                    while (i < inputstring.size() && inputstring[i] != '\"')
-                    {
-                        i++;
-                        if(i < n && inputstring[i] == '\\')
-                            i++;
-                    }
+            }
+        }
+        if (i + 2 < n)
+            if (inputstring.substr(i, 3) == "if(")
+            {
+                while (i < n && inputstring[i] != '{')
+                    i++;
+                //此时i为if段的开头‘{’
+                int countleftParenthesis = 1;
+                while (i < n && countleftParenthesis) {
+                    i++;
+                    if (inputstring[i] == '{')
+                        countleftParenthesis++;
+                    if (inputstring[i] == '}')
+                        countleftParenthesis--;
                 }
-                if (i + 2 < n)
-                    if (inputstring.substr(i, 3) == "if(")
-                    {
-                        while (i < n && inputstring[i] != '{')
-                            i++;
-                        //此时i为if段的开头‘{’
-                        int countleftParenthesis = 1;
-                        while (i < n && countleftParenthesis) {
-                            i++;
-                            if (inputstring[i] == '{')
-                                countleftParenthesis++;
-                            if (inputstring[i] == '}')
-                                countleftParenthesis--;
-                        }
-                        if (i == n)
-                            throw Excep("Error string");;
-                        //此时i为if的开头‘i’，j为if的结尾‘}’
-                        if (i < n && inputstring.substr(i + 1, 5) == "else{")
-                        {
-                            i = i + 5;
-                            countleftParenthesis = 1;
-                            while (i < n && countleftParenthesis) {
-                                i++;
-                                if (inputstring[i] == '{')
-                                    countleftParenthesis++;
-                                if (inputstring[i] == '}')
-                                    countleftParenthesis--;
-                            }
-                        }
-                        if (i == n)
-                            throw Excep("Error string");;
-                        //此时i为if的开头‘i’，j为else的结尾‘}’
-                    }
-                if (i + 5 < n)
-                    if (inputstring.substr(i, 6) == "while(")
-                    {
-                        while (i < n && inputstring[i] != '{')
-                            i++;
-                        int countleftParenthesis = 1;
-                        while (i < n && countleftParenthesis) {
-                            i++;
-                            if (inputstring[i] == '{')
-                                countleftParenthesis++;
-                            if (inputstring[i] == '}')
-                                countleftParenthesis--;
-                        }
-                        if (i == n)
-                            throw Excep("Error string");;
-                        //此时i为while的开头‘w’，j为while的结尾‘}’
-                    }
-                if (i < n && inputstring[i] == '{')
+                if (i == n)
+                    throw "Err string";
+                //此时i为if的开头‘i’，j为if的结尾‘}’
+                if (i < n && inputstring.substr(i + 1, 5) == "else{")
                 {
-                    int countleftParenthesis = 1;
-                    while (i < n && countleftParenthesis > 0)
-                    {
+                    i = i + 5;
+                    countleftParenthesis = 1;
+                    while (i < n && countleftParenthesis) {
                         i++;
                         if (inputstring[i] == '{')
                             countleftParenthesis++;
@@ -168,45 +151,83 @@ BasicNode* ast::__toAST(string &inputstring, Scope* sc)
                             countleftParenthesis--;
                     }
                 }
-                if (inputstring[i] == cLowestPriority)
-                {
-                    input.push_back(inputstring.substr(0, i));
-                    inputstring = inputstring.substr(i + 1);
-                    i = -1;
-                    n = inputstring.size();
-                }
-                if (i == n - 1)
-                    input.push_back(inputstring);
+                if (i == n)
+                    throw "Err string";
+                //此时i为if的开头‘i’，j为else的结尾‘}’
             }
-    for(auto& s : input){
-        s += cLowestPriority;
-        stack<BasicNode*> stackAST;
-        stack<string> stackOp;
-        string::size_type n = s.size(), i = 0;
-                bool ReturnFlag = false;
-                bool FunReturnFlag = false;
-                bool DefineFunFlag = false;
+        if (i + 5 < n)
+            if (inputstring.substr(i, 6) == "while(")
+            {
+                while (i < n && inputstring[i] != '{')
+                    i++;
+                int countleftParenthesis = 1;
+                while (i < n && countleftParenthesis) {
+                    i++;
+                    if (inputstring[i] == '{')
+                        countleftParenthesis++;
+                    if (inputstring[i] == '}')
+                        countleftParenthesis--;
+                }
+                if (i == n)
+                    throw "Err string";
+                //此时i为while的开头‘w’，j为while的结尾‘}’
+            }
+        if (i < n && inputstring[i] == '{')
+        {
+            int countleftParenthesis = 1;
+            while (i < n && countleftParenthesis > 0)
+            {
+                i++;
+                if (inputstring[i] == '{')
+                    countleftParenthesis++;
+                if (inputstring[i] == '}')
+                    countleftParenthesis--;
+            }
+        }
+        if (inputstring[i] == cLowestPriority)
+        {
+            input.push_back(inputstring.substr(0, i));
+            inputstring = inputstring.substr(i + 1);
+            i = -1;
+            n = inputstring.size();
+        }
+        if (i == n - 1)
+            input.push_back(inputstring);
+    }
 
-                if (s[0] == cReturnFlag)//此句为返回值
-                {
-                    ReturnFlag = true;
-                    i++;
-                }
-                if (s[0] == cDenineFunFlag)//此句为函数定义
-                {
-                    DefineFunFlag = true;
-                    i++;
-                }
+    for (auto& s : input)
+    {
+        s += sLowestPriority;
+        vector<BasicNode*> token;
+        vector<string> BinOp;
+        string::size_type n = s.size(), i = 0;
+        int highPriority = 0;
+        bool ReturnFlag = false;
+        bool FunReturnFlag = false;
+        bool DefineFunFlag = false;
+
+        if (s[0] == cReturnFlag)//此句为返回值
+        {
+            ReturnFlag = true;
+            i++;
+        }
+        if (s[0] == cDenineFunFlag)//此句为函数定义
+        {
+            DefineFunFlag = true;
+            i++;
+        }
+
         for (; i < n; i++)
         {
             string temp;
             string::size_type j = i;
 
+            //数字
             if ((s[j] == '+' || s[j] == '-') && (j == 0 || isBinOp(s[j - 1])))
             {
                 j++;
             }//检查负号还是减号
-            if(j < n && isNum(s[j]))
+            if (j < n && isNum(s[j]))
             {
                 while (j < n && isNum(s[j]))
                     j++;//整数部分
@@ -217,20 +238,18 @@ BasicNode* ast::__toAST(string &inputstring, Scope* sc)
                         j++;
                     }
                 }
-                temp += s.substr(i,j-i);
+                temp = s.substr(i, j - i);
                 i = j;
-                stackAST.push(new NumNode(stod(temp)));
+                token.push_back(new NumNode(stod(temp)));
             }
 
             else if (j < n && isLetter(s[j]))
             {
-                while(j < n && isLetter(s[j]))
+                while (j < n && (isLetter(s[j]) || isNum(s[j])))
                     j++;
-
                 if (s.substr(i, j - i) == "if")
                 {
                     i = j;
-                    BasicNode* condition, *truePro, *falsePro = nullptr;
                     //此时i为'('
                     int countleftParenthesis = 1;
                     while (j < s.size() && s[j] != ')')
@@ -242,7 +261,7 @@ BasicNode* ast::__toAST(string &inputstring, Scope* sc)
                             countleftParenthesis--;
                     }
                     //此时j为')'
-                    condition =  toAST(temp = s.substr(i + 1, j - i - 1), sc);
+                    BasicNode* a = __toAST(temp = s.substr(i + 1, j - i - 1), sc);
                     i = j + 1;//此时i为'{'
                     j = i;
                     countleftParenthesis = 1;
@@ -253,7 +272,8 @@ BasicNode* ast::__toAST(string &inputstring, Scope* sc)
                         if (s[j] == '}')
                             countleftParenthesis--;
                     }//此时j为if体结束'}'
-                    truePro = toAST(temp = s.substr(i + 1, j - i - 1), sc);
+                    BasicNode* b = __toAST(temp = s.substr(i + 1, j - i - 1), sc);
+                    BasicNode* c = nullptr;
                     if (s.substr(j + 1, 4) == "else")
                     {
                         i = j + 5;//此时i为'{'
@@ -266,9 +286,10 @@ BasicNode* ast::__toAST(string &inputstring, Scope* sc)
                             if (s[j] == '}')
                                 countleftParenthesis--;
                         }//此时j为else体结束'}'
-                        falsePro = toAST(temp = s.substr(i + 1, j - i - 1), sc);
+                        c = __toAST(temp = s.substr(i + 1, j - i - 1), sc);
                     }
-                    stackAST.push(new IfNode(condition,truePro,falsePro));
+                    IfNode* node = new IfNode(a,b,c);
+                    token.push_back(node);
                     i = j + 1;
                 }
 
@@ -280,13 +301,13 @@ BasicNode* ast::__toAST(string &inputstring, Scope* sc)
                     while (j < s.size() && s[j] != ')')
                     {
                         j++;
-                        if (s[j] == '{')
+                        if (s[j] == '(')
                             countleftParenthesis++;
-                        if (s[j] == '}')
+                        if (s[j] == ')')
                             countleftParenthesis--;
                     }
                     //此时j为')'
-                    BasicNode* condition =  toAST(temp = s.substr(i + 1, j - i - 1), sc);
+                    BasicNode* a = __toAST(temp = s.substr(i + 1, j - i - 1), sc);
                     i = j + 1;//此时i为'{'
                     j = i;
                     countleftParenthesis = 1;
@@ -297,143 +318,222 @@ BasicNode* ast::__toAST(string &inputstring, Scope* sc)
                         if (s[j] == '}')
                             countleftParenthesis--;
                     }//此时j为while体结束'}'
-                    BasicNode* body = toAST(temp = s.substr(i + 1, j - i - 1), sc);
-                    stackAST.push(new WhileNode(condition, body));
-                }
-
-
-                else if(j < n && s[j] == '(') //函数
-                {
-                    string name=s.substr(i, j - i);
-                    if (DefineFunFlag)//函数定义
-                                        {
-                                            i = j + 1;//此时i为(下一个字符
-                                            string type, parName;
-                                            Scope* FunSc = new Scope(sc);
-                                            vector<VarRefNode*> VarRef;
-                                            while (j < n && j >= 1 && s[j - 1] != ')')
-                                            {
-                                                j++;
-                                                if (s[j] == cType_ParSpacer)
-                                                {
-                                                    type = s.substr(i, j - i);
-                                                    i = j;
-                                                }
-                                                if (s[j] == ',' || s[j] == ')')
-                                                {
-                                                    parName = s.substr(i + 1, j - i - 1);
-                                                    i = j;
-                                                    FunSc->addVariable(parName, new Variable);
-                                                    type = parName = "";
-                                                }
-                                            }
-                                            //此时ij都是)
-                                            BasicNode* FunBody = toAST(temp = s.substr(i + 1, s.size() - i - 2), FunSc);//把{开始到结尾都当做函数体
-                                            sc->addFunction(name, new Function(FunBody));
-                                            i = s.size() - 1;
-                                        }
-                    else{
-                    FunNode* node = new FunNode(sc->findFunction(name));
-                    int countleftParenthesis = 1;
-                    //此时s[j] == '('
-                    i=j;
-                    while(countleftParenthesis != 0 && j < n)
-                    {
-                        j++;
-                        if(j < n && (s[j] == ','|| s[j] == ')') && countleftParenthesis == 1)
-                        {
-                            node->addNode(__toAST(temp = s.substr(i + 1, j - i - 1), sc));
-                            if(s[j]==')') countleftParenthesis--;
-                            i=j;
-                        }
-                        else
-                        {
-                            if(s[j] == '(')
-                                countleftParenthesis++;
-                            if(s[j] == ')')
-                                countleftParenthesis--;
-                        }
-                    }
-                    stackAST.push(node);
+                    BasicNode* b = __toAST(temp = s.substr(i + 1, j - i - 1), sc);
+                    WhileNode* node   = new WhileNode(a,b);
+                    token.push_back(node);
                     i = j + 1;
                 }
-}
+
+                else if (j < n && s[j] == '(') //函数
+                {
+                    string name = s.substr(i, j - i);
+                    if (DefineFunFlag)//函数定义
+                    {
+                        vector<pair<int, Variable*>> parList;
+                        vector<bool> isQuote;
+                        i = j;//此时i为(
+                        string type, parName;
+                        Scope* FunSc = new Scope(sc);
+                        while (j < n && j - 1 >= 0 && s[j - 1] != ')')
+                        {
+                            j++;
+                            if (s[j] == cType_ParSpacer || s[j] == cType_ParSpacerQuote)
+                            {
+                                type = s.substr(i + 1, j - i - 1);
+                                i = j;
+                                if (s[j] == cType_ParSpacer)
+                                    isQuote.push_back(false);
+                                else
+                                    isQuote.push_back(true);
+                            }
+                            if (s[j] == ',' || s[j] == ')')
+                            {
+                                parName = s.substr(i + 1, j - i - 1);
+                                i = j;
+                                if (parName != "")
+                                {
+                                    FunSc->addVariable(parName, new Variable());
+                                    parList.push_back(make_pair(StringToType(type), FunSc->findVariable(parName)));
+                                }
+                                type = parName = "";
+                            }
+                        }
+                        //此时ij都是)
+                        BasicNode* FunBody = __toAST(temp = s.substr(i + 1, s.size() - i - 2), FunSc);//把{开始到结尾都当做函数体
+                        sc->addFunction(name, new Function(FunBody, parList.size()));
+                        break;
+                        //对于函数定义，他是不用eval就能求值（把定义的函数放在域中）
+                    }
+                    else
+                    {
+                        FunNode* node = new FunNode(sc->findFunction(name));
+                        int countleftParenthesis = 1;
+                        //此时s[j] == '('
+                        i = j;
+                        while (countleftParenthesis != 0 && j < n)
+                        {
+                            j++;
+                            if (j < n && (s[j] == ',' || s[j] == ')') && countleftParenthesis == 1)
+                            {
+                                temp = s.substr(i + 1, j - i - 1);
+                                if(temp != "")
+                                    node->addNode(__toAST(temp , sc));
+                                if (s[j] == ')') countleftParenthesis--;
+                                i = j;
+                            }
+                            else
+                            {
+                                if (s[j] == '(')
+                                    countleftParenthesis++;
+                                if (s[j] == ')')
+                                    countleftParenthesis--;
+                            }
+                        }
+                        token.push_back(node);
+                        i = j + 1;
+                    }
+                }
+
                 else //变量
                 {
-                    string name=s.substr(i, j -  i);
-                    Variable* v=sc->findVariable(name);
-                    if(v==nullptr) //先前没有这变量
+                    string name = s.substr(i, j - i);
+                    Variable* v = sc->findVariable(name);
+                    if (v == nullptr) //先前没有这变量
                     {
-                        v=sc->addVariable(name);
-                        Variable* pv=sc->addVariable("ptr"+name);
-                        pv->setBorrowVal(v);
+                        sc->findVariable(name, v = new Variable());
                     }
-                    stackAST.push(v);
+                    token.push_back(v);
                     i = j;
                 }
             }
-            else if(j < n && s[j] == '(')//含括号的表达式
+
+            else if (j < n && s[j] == '(')//含括号的表达式
             {
                 i = j;
                 int countleftParenthesis = 1;
-                while(j < n && countleftParenthesis > 0)
+                while (j < n && countleftParenthesis > 0)
                 {
                     j++;
-                    if(s[j] == '(')
+                    if (s[j] == '(')
                         countleftParenthesis++;
-                    if(s[j] == ')')
+                    if (s[j] == ')')
                         countleftParenthesis--;
                 }
-                if(s[j] == ')')
+                if (s[j] == ')')
                 {
-                    stackAST.push(__toAST(temp = s.substr(i + 1, j - i - 1), sc));//为了让参数1变为左值
+                    token.push_back(__toAST(temp = s.substr(i + 1, j - i - 1), sc));
                     i = j + 1;//+1是要过掉‘)’
                 }
+
                 else//读到了字符串尾还是没有右括号
                 {
-                    stackAST.push(__toAST(temp = s.substr(i + 1, j - i - 2), sc));
-                    i = j - 1;//应该忽略掉字符串结尾的$，便于下面判断是否能进stackOp
+                    token.push_back(__toAST(temp = s.substr(i + 1, j - i - 2), sc));
+                    i = j - 1;//应该忽略掉字符串结尾的;，便于下面判断是否能进stackOp
                 }
             }
 
-
-            if(i < n && (isBinOp(s[i]) || s[i] == cLowestPriority))//按理说，一个数字/变量/函数结束之后是一个运算符/字符串结尾
+            else if (j < n && s[j] == '{')//含括号的表达式
             {
-                if (canpush(stackOp, s.substr(i,1)))
+                i = j;
+                int countleftParenthesis = 1;
+                while (j < n && countleftParenthesis > 0)
                 {
-                    stackOp.push(s.substr(i,1));
+                    j++;
+                    if (s[j] == '{')
+                        countleftParenthesis++;
+                    if (s[j] == '}')
+                        countleftParenthesis--;
                 }
-                else {
-                    while (!canpush(stackOp, s.substr(i,1)))
-                    {
-                        BasicNode* a = stackAST.top();
-                        stackAST.pop();
-                        BasicNode* b = stackAST.top();
-                        stackAST.pop();
-                        string c = stackOp.top();
-                        stackOp.pop();
-                        FunNode* node = new FunNode(sc->findFunction(c));
-                        node->addNode(b);
-                        node->addNode(a);
-                        stackAST.push(node);
-                    }
-                    stackOp.push(s.substr(i,1));
+                if (s[j] == '}')
+                {
+                    token.push_back(__toAST(temp = s.substr(i + 1, j - i - 1), sc));
+                    i = j + 1;//+1是要过掉‘}’
                 }
+
+                else//读到了字符串尾还是没有右括号
+                {
+                    token.push_back(__toAST(temp = s.substr(i + 1, j - i - 2), sc));
+                    i = j - 1;//应该忽略掉字符串结尾的;，便于下面判断是否能进stackOp
+                }
+            }
+
+            else if (j < n && s[j] == '\"')
+            {
+                i = j;
+                j++;
+                while (j < n&& s[j] != '\"')
+                {
+                    j++;
+                    if (j < s.size() && s[j] == '\\')
+                        j++;
+                }
+                token.push_back(new StringNode(s.substr(i + 1, j - i - 1)));
+                i = j + 1;
+            }
+
+            if (i < n && (isBinOp(s[i]) || s[i] == cLowestPriority))
+            {
+                BinOp.push_back(string(1, s[i]));
+                highPriority = highPriority > BinOpPriority[*(BinOp.end() - 1)] ? highPriority : BinOpPriority[*(BinOp.end() - 1)];
             }
             else
-            {
-                throw Excep("Error string");
-            }
-
+                throw "Err string";
         }
-        if (!stackAST.empty())
+
+        if (BinOp.size() != token.size())
+            throw "Err string";
+        //正常的语句是，二元运算符比操作数少一个
+        //但是这里把';'放进去了
+
+        while (highPriority)
         {
-            BasicNode* r = stackAST.top();
+            int t = highPriority;
+            highPriority = 0;
+            if(BinOpCombination[t])
+                for (vector<string>::size_type i = 0; i < BinOp.size(); i++)
+                {
+                    int now = BinOpPriority[BinOp[i]];
+                    if (now == t)
+                    {
+                        FunNode* Op = new FunNode(sc->findFunction(BinOp[i]));
+                        Op->addNode(token[i]);
+                        Op->addNode(token[i + 1]);
+                        token[i] = Op;
+                        token.erase(token.begin() + (i + 1));
+                        BinOp.erase(BinOp.begin() + i);
+                        i--;
+                    }
+                    else
+                        highPriority = highPriority > now ? highPriority : now;
+                }
+            else
+                for (int i = (int)BinOp.size() - 1; i >= 0; i--)//因为size()返回值为无符号的
+                {
+                    int now = BinOpPriority[BinOp[i]];
+                    if (now == t)
+                    {
+                        FunNode* Op = new FunNode(sc->findFunction(BinOp[i]));
+                        Op->addNode(token[i]);
+                        Op->addNode(token[i + 1]);
+                        token[i + 1] = Op;
+                        token.erase(token.begin() + i);
+                        BinOp.erase(BinOp.begin() + i);
+                        i++;
+                    }
+                    else
+                        highPriority = highPriority > now ? highPriority : now;
+                }
+        }
+
+        if (!token.empty())
+        {
+            BasicNode* r = token[0];
             if (ReturnFlag)
                 r->setRet();
             output.push_back(r);
         }
     }
+
     if (output.size() == 0)
         return new nullNode();
     if (output.size() == 1)
@@ -454,6 +554,18 @@ BasicNode* ast::toAST(string s, Scope* sc){
     //其他的回车换为';'
     for (string::size_type i = 0; i < s.size(); i++)
     {
+        if (s[i] == '\"')//把'\\'和他后面的看成一个字符
+        {
+            i++;
+            while (i < s.size() && s[i] != '\"')
+            {
+                i++;
+                if (i < s.size() && s[i] == '\\')
+                    i++;
+            }
+        }
+        if (i == s.size())
+            throw "Err string";
         if (s[i] == '\x20' || s[i] == '\t')
         {
             s.erase(i, 1);
