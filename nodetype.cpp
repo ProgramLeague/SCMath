@@ -227,10 +227,6 @@ BasicNode* FunNode::eval()
     }
     if(!this->giveupEval){
         result = this->getEntity()->eval(var);
-        for(auto& i:var){
-            delete i;
-            i = nullptr;
-        }
     }
     else {
         result = new FunNode(this->getEntity());
